@@ -1,0 +1,48 @@
+{
+  "difficulty_profiles": {
+    "conservative": {
+      "label": "Conservative",
+      "description": "Defensive gameplay with fewer boundaries and wickets",
+      "four_coeff": 0.015,
+      "six_coeff": 0.008,
+      "wicket_coeff": 0.011,
+      "dot_ball_coeff": 0.50,
+      "batsman_six_boost": 0.006,
+      "batsman_four_boost": 0.012,
+      "bowler_wicket_boost": 0.004
+    },
+    "balanced": {
+      "label": "Balanced",
+      "description": "Default balanced gameplay",
+      "four_coeff": 0.02,
+      "six_coeff": 0.01,
+      "wicket_coeff": 0.013,
+      "dot_ball_coeff": 0.45,
+      "batsman_six_boost": 0.008,
+      "batsman_four_boost": 0.016,
+      "bowler_wicket_boost": 0.006
+    },
+    "aggressive": {
+      "label": "Aggressive",
+      "description": "Offensive gameplay with more boundaries",
+      "four_coeff": 0.025,
+      "six_coeff": 0.015,
+      "wicket_coeff": 0.016,
+      "dot_ball_coeff": 0.35,
+      "batsman_six_boost": 0.01,
+      "batsman_four_boost": 0.020,
+      "bowler_wicket_boost": 0.009
+    }
+  },
+  "default_profile": "balanced",
+  "game_settings": {
+    "total_overs": 20,
+    "overs_in_final_4": 4,
+    "final_4_excitement_multiplier": {
+      "four_boost": 0.009,
+      "six_boost": 0.006,
+      "wicket_boost": 0.006,
+      "dot_reduction": 0.05
+    }
+  }
+}

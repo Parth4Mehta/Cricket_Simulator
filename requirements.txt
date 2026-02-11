@@ -1,0 +1,6 @@
+# CricSim - No Required Dependencies
+# All core functionality uses Python standard library only
+# Optional dependencies below for enhanced output
+
+# Optional - for beautiful console tables (fallback to plain text if not installed)
+rich>=10.0.0

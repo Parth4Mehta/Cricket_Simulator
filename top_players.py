@@ -1,0 +1,339 @@
+"""
+top_players.py
+
+Compute top 10 players for various categories using the simulator database.
+
+Categories:
+- Most runs
+- Most wickets
+- Highest Score
+- Most fours
+- Most sixes
+- Highest Strike Rate
+- Best Bowling (by best_bowling field: wickets desc, runs asc)
+- Best Economy (aggregated from match files' bowling stats)
+
+The script prefers `database/match_stats_player_stats.json` (user-provided name),
+then falls back to `database/player_stats.json`. For economy it aggregates
+bowling `runs` and `balls` from files under `database/match_stats/`.
+
+Usage:
+    python top_players.py --print
+    python top_players.py --output database/top_players_summary.json
+
+"""
+import os
+import json
+import argparse
+from collections import defaultdict
+
+DEFAULT_SOURCES = [
+    os.path.join("database", "match_stats_player_stats.json"),
+    os.path.join("database", "player_stats.json"),
+]
+MATCH_DIR = os.path.join("database", "match_stats")
+
+
+def load_json_if_exists(path):
+    if os.path.exists(path):
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return None
+
+
+def aggregate_bowling_from_matches(match_dir):
+    """Aggregate bowling runs and balls per bowler from match JSON files.
+    Returns dict: name -> {"runs_conceded": int, "balls_bowled": int}
+    """
+    agg = defaultdict(lambda: {"runs_conceded": 0, "balls_bowled": 0})
+    if not os.path.isdir(match_dir):
+        return agg
+
+    for fn in os.listdir(match_dir):
+        path = os.path.join(match_dir, fn)
+        if not fn.lower().endswith(".json"):
+            continue
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+        except Exception:
+            continue
+
+        # Each match file has keys: 'meta' and team names mapping to {"batting": [...], "bowling": {...}}
+        for key, val in data.items():
+            if key == "meta":
+                continue
+            team_section = val
+            bowling = team_section.get("bowling") or {}
+            # bowling is expected to be dict bowler_name -> {"overs":..., "balls":..., "runs":..., "wickets":...}
+            for bowler, st in bowling.items():
+                runs = st.get("runs", 0)
+                balls = st.get("balls", 0)
+                agg[bowler]["runs_conceded"] += runs
+                agg[bowler]["balls_bowled"] += balls
+    return agg
+
+
+def top_n_by_numeric(mapping, key_fn, n=10, reverse=True):
+    items = []
+    for name, entry in mapping.items():
+        try:
+            val = key_fn(entry)
+        except Exception:
+            val = None
+        items.append((name, entry, val))
+    # Filter out None values
+    items = [t for t in items if t[2] is not None]
+    items_sorted = sorted(items, key=lambda t: t[2], reverse=reverse)
+    return items_sorted[:n]
+
+
+def compute_categories(players, match_bowling_agg):
+    results = {}
+
+    # Most runs (Orange Cap)
+    results["most_runs"] = [
+        {"name": name, "runs": entry.get("runs", 0), "matches": entry.get("matches", 0)}
+        for name, entry, _ in top_n_by_numeric(players, lambda e: e.get("runs", 0), 10, True)
+    ]
+
+    # Most wickets (Purple Cap)
+    results["most_wickets"] = [
+        {"name": name, "wickets": entry.get("wickets", 0), "matches": entry.get("matches", 0)}
+        for name, entry, _ in top_n_by_numeric(players, lambda e: e.get("wickets", 0), 10, True)
+    ]
+
+    # Least wickets - exclude those with 0 wickets
+    def least_wickets_key(e):
+        w = e.get("wickets", 0)
+        if w == 0:
+            return None
+        return w
+    results["least_wickets"] = [
+        {"name": name, "wickets": entry.get("wickets", 0), "matches": entry.get("matches", 0)}
+        for name, entry, _ in top_n_by_numeric(players, least_wickets_key, 10, False)
+    ]
+
+    # Highest score
+    results["highest_score"] = [
+        {"name": name, "highest_score": entry.get("highest_score", 0), "balls": entry.get("balls_in_highest_score", 0)}
+        for name, entry, _ in top_n_by_numeric(players, lambda e: e.get("highest_score", 0), 10, True)
+    ]
+
+    # Most fours
+    results["most_fours"] = [
+        {"name": name, "fours": entry.get("fours", 0)}
+        for name, entry, _ in top_n_by_numeric(players, lambda e: e.get("fours", 0), 10, True)
+    ]
+
+    # Most sixes
+    results["most_sixes"] = [
+        {"name": name, "sixes": entry.get("sixes", 0)}
+        for name, entry, _ in top_n_by_numeric(players, lambda e: e.get("sixes", 0), 10, True)
+    ]
+
+    # Highest Strike Rate (runs/balls_faced * 100) - require runs >= 250
+    def sr(e):
+        runs = e.get("runs", 0)
+        balls = e.get("balls_faced", 0)
+        if runs < 100 or balls <= 0:
+            return None
+        return (runs / balls) * 100
+
+    results["highest_strike_rate"] = [
+        {"name": name, "strike_rate": round(val, 2), "runs": entry.get("runs", 0), "balls_faced": entry.get("balls_faced", 0)}
+        for name, entry, val in top_n_by_numeric(players, sr, 10, True)
+    ]
+
+    # Lowest Strike Rate - require runs >= 250
+    results["lowest_strike_rate"] = [
+        {"name": name, "strike_rate": round(val, 2), "runs": entry.get("runs", 0), "balls_faced": entry.get("balls_faced", 0)}
+        for name, entry, val in top_n_by_numeric(players, sr, 10, False)
+    ]
+
+    # Best Bowling (from best_bowling field)
+    def best_bowling_key(e):
+        bb = e.get("best_bowling") or {}
+        w = bb.get("wickets", 0)
+        r = bb.get("runs", 9999)
+        # sort by wickets desc, runs asc -> numeric key: (w, -r) but top_n_by_numeric only supports numeric
+        # We'll return a tuple-like but we can map to a composite number: w*100000 - r
+        return w * 100000 - r
+
+    top_bb = top_n_by_numeric(players, best_bowling_key, 10, True)
+    results["best_bowling"] = []
+    for name, entry, val in top_bb:
+        bb = entry.get("best_bowling") or {"wickets": 0, "runs": None}
+        results["best_bowling"].append({"name": name, "wickets": bb.get("wickets", 0), "runs": bb.get("runs")})
+
+    # Best Economy - compute from match_aggregated bowling stats (runs_conceded, balls_bowled)
+    econ_list = []
+    for bowler, stats in match_bowling_agg.items():
+        balls = stats.get("balls_bowled", 0)
+        runs = stats.get("runs_conceded", 0)
+        if balls <= 0:
+            continue
+        overs = balls / 6.0
+        econ = runs / overs if overs > 0 else None
+        if econ is None:
+            continue
+        econ_list.append((bowler, {"runs_conceded": runs, "balls_bowled": balls, "economy": round(econ, 3)}, econ))
+
+    # sort by economy ascending (lower is better)
+    econ_list_sorted = sorted(econ_list, key=lambda t: t[2])[:10]
+    results["best_economy"] = [
+        {"name": name, "economy": info["economy"], "runs_conceded": info["runs_conceded"], "balls_bowled": info["balls_bowled"]}
+        for name, info, _ in econ_list_sorted
+    ]
+
+    # Worst Economy - highest economy rate
+    econ_list_worst = sorted(econ_list, key=lambda t: t[2], reverse=True)[:10]
+    results["worst_economy"] = [
+        {"name": name, "economy": info["economy"], "runs_conceded": info["runs_conceded"], "balls_bowled": info["balls_bowled"]}
+        for name, info, _ in econ_list_worst
+    ]
+
+    # Best Bowling Average (Season-long) - aggregate from matches
+    bowling_season_list = []
+    for bowler, stats in match_bowling_agg.items():
+        total_runs = stats.get("runs_conceded", 0)
+        if bowler in players:
+            player_wickets = players[bowler].get("wickets", 0)
+            if player_wickets > 0:
+                avg = total_runs / player_wickets
+                bowling_season_list.append((bowler, {"wickets": player_wickets, "runs": total_runs, "bowling_average": round(avg, 2)}, avg))
+    
+    # Sort by bowling average ascending (lower is better)
+    bowling_avg_sorted = sorted(bowling_season_list, key=lambda t: t[2])[:10]
+    results["best_bowling_average"] = [
+        {"name": name, "bowling_average": info["bowling_average"], "wickets": info["wickets"], "runs": info["runs"]}
+        for name, info, _ in bowling_avg_sorted
+    ]
+
+    # Worst Bowling Average (Season-long) - highest average
+    bowling_avg_worst = sorted(bowling_season_list, key=lambda t: t[2], reverse=True)[:10]
+    results["worst_bowling_average"] = [
+        {"name": name, "bowling_average": info["bowling_average"], "wickets": info["wickets"], "runs": info["runs"]}
+        for name, info, _ in bowling_avg_worst
+    ]
+
+    return results
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--source", help="Player stats JSON file (preferred)", default=None)
+    parser.add_argument("--match-dir", help="Match stats directory to aggregate bowling (default database/match_stats)", default=MATCH_DIR)
+    parser.add_argument("--output", help="Output JSON path (optional)", default=None)
+    parser.add_argument("--print", dest="print_out", action="store_true", help="Print results to console")
+    args = parser.parse_args()
+
+    # Determine source
+    players = None
+    if args.source:
+        players = load_json_if_exists(args.source)
+        if players is None:
+            print(f"Source file {args.source} not found or invalid.")
+    else:
+        for p in DEFAULT_SOURCES:
+            players = load_json_if_exists(p)
+            if players is not None:
+                break
+
+    if players is None:
+        print("No player stats JSON found. Exiting.")
+        return 1
+
+    match_bowling_agg = aggregate_bowling_from_matches(args.match_dir)
+
+    results = compute_categories(players, match_bowling_agg)
+
+    # Always print results to terminal
+    for cat, items in results.items():
+        print("\n" + "="*60)
+        print(f"  {cat.upper().replace('_', ' ')}")
+        print("="*60)
+        if not items:
+            print("  No data available")
+        else:
+            for i, it in enumerate(items, 1):
+                name = it.get("name", "Unknown")
+                # Format based on category
+                if cat == "most_runs":
+                    runs = it.get('runs', 0)
+                    matches = it.get('matches', 0)
+                    print(f"  {i:2}. {name:<30} Runs: {runs} (🟠 ORANGE CAP) | Matches: {matches}")
+                elif cat == "most_wickets":
+                    wickets = it.get('wickets', 0)
+                    matches = it.get('matches', 0)
+                    print(f"  {i:2}. {name:<30} Wickets: {wickets} (🟣 PURPLE CAP) | Matches: {matches}")
+                elif cat == "least_wickets":
+                    wickets = it.get('wickets', 0)
+                    matches = it.get('matches', 0)
+                    print(f"  {i:2}. {name:<30} Wickets: {wickets} | Matches: {matches}")
+                elif cat == "highest_score":
+                    score = it.get('highest_score', 0)
+                    balls = it.get('balls', 0)
+                    if balls > 0:
+                        sr = (score / balls) * 100
+                        print(f"  {i:2}. {name:<30} {score} ({balls} balls, SR: {sr:.2f})")
+                    else:
+                        print(f"  {i:2}. {name:<30} Highest Score: {score}")
+                elif cat == "most_fours":
+                    print(f"  {i:2}. {name:<30} Fours: {it.get('fours', 0)}")
+                elif cat == "most_sixes":
+                    print(f"  {i:2}. {name:<30} Sixes: {it.get('sixes', 0)}")
+                elif cat == "highest_strike_rate":
+                    sr = it.get('strike_rate', 0)
+                    runs = it.get('runs', 0)
+                    balls = it.get('balls_faced', 0)
+                    print(f"  {i:2}. {name:<30} SR: {sr}% ({runs} runs, {balls} balls)")
+                elif cat == "lowest_strike_rate":
+                    sr = it.get('strike_rate', 0)
+                    runs = it.get('runs', 0)
+                    balls = it.get('balls_faced', 0)
+                    print(f"  {i:2}. {name:<30} SR: {sr}% ({runs} runs, {balls} balls)")
+                elif cat == "best_bowling":
+                    wickets = it.get('wickets', 0)
+                    runs = it.get('runs', 'N/A')
+                    print(f"  {i:2}. {name:<30} {wickets}W/{runs}R")
+                elif cat == "best_economy":
+                    econ = it.get('economy', 0)
+                    runs = it.get('runs_conceded', 0)
+                    balls = it.get('balls_bowled', 0)
+                    print(f"  {i:2}. {name:<30} Economy: {econ} ({runs} runs, {balls} balls)")
+                elif cat == "worst_economy":
+                    econ = it.get('economy', 0)
+                    runs = it.get('runs_conceded', 0)
+                    balls = it.get('balls_bowled', 0)
+                    print(f"  {i:2}. {name:<30} Economy: {econ} ({runs} runs, {balls} balls)")
+                elif cat == "best_bowling_average":
+                    avg = it.get('bowling_average', 0)
+                    wickets = it.get('wickets', 0)
+                    runs = it.get('runs', 0)
+                    print(f"  {i:2}. {name:<30} Avg: {avg} ({runs}R in {wickets}W)")
+                elif cat == "worst_bowling_average":
+                    avg = it.get('bowling_average', 0)
+                    wickets = it.get('wickets', 0)
+                    runs = it.get('runs', 0)
+                    print(f"  {i:2}. {name:<30} Avg: {avg} ({runs}R in {wickets}W)")
+                else:
+                    print(f"  {i:2}. {it}")
+
+    if args.output:
+        outp = args.output
+    else:
+        outp = os.path.join("database", "top_players_summary.json")
+
+    try:
+        with open(outp, "w", encoding="utf-8") as f:
+            json.dump(results, f, indent=4)
+        print(f"\nResults written to: {outp}")
+    except Exception as e:
+        print(f"Failed to write output file: {e}")
+
+    return 0
+
+
+if __name__ == "__main__":
+    main()
