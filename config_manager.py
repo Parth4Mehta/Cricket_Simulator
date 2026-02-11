@@ -20,6 +20,15 @@ def load_config():
         raise ValueError(f"Invalid JSON in config.json")
 
 
+def save_config(config):
+    """Save configuration to config.json"""
+    try:
+        with open(CONFIG_FILE, "w") as f:
+            json.dump(config, f, indent=2)
+    except Exception as e:
+        raise Exception(f"Failed to save config.json: {e}")
+
+
 def get_profile(profile_name):
     """Get a difficulty profile by name"""
     config = load_config()
@@ -48,4 +57,34 @@ def list_profiles():
 def get_game_settings():
     """Get general game settings"""
     config = load_config()
+    return config.get("game_settings", {})
+
+
+def update_advanced_profile(coefficients):
+    """Update the advanced profile with custom coefficients"""
+    config = load_config()
+    if "advanced" not in config.get("difficulty_profiles", {}):
+        raise ValueError("Advanced profile not found in config")
+    
+    config["difficulty_profiles"]["advanced"].update(coefficients)
+    save_config(config)
+
+
+def reset_advanced_profile():
+    """Reset advanced profile to balanced defaults"""
+    config = load_config()
+    balanced = config.get("difficulty_profiles", {}).get("balanced", {})
+    
+    if "advanced" not in config.get("difficulty_profiles", {}):
+        raise ValueError("Advanced profile not found in config")
+    
+    # Copy balanced profile coefficients to advanced
+    coeff_keys = ["four_coeff", "six_coeff", "wicket_coeff", "dot_ball_coeff", 
+                  "batsman_six_boost", "batsman_four_boost", "bowler_wicket_boost"]
+    
+    for key in coeff_keys:
+        if key in balanced:
+            config["difficulty_profiles"]["advanced"][key] = balanced[key]
+    
+    save_config(config)
     return config.get("game_settings", {})

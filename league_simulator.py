@@ -5,6 +5,7 @@ from teams import get_teams
 from database import clear_database
 import database
 import random
+from config_manager import reset_advanced_profile
 
 
 def select_teams():
@@ -146,6 +147,13 @@ def simulate_league(selected_teams=None):
     print(f"\n{'='*60}")
     print(f"🏆 LEAGUE CHAMPION: {final_winner} 🏆")
     print(f"{'='*60}\n")
+    
+    # Reset advanced coefficients to balanced after league ends
+    try:
+        reset_advanced_profile()
+        print("✅ Game coefficients reset to Balanced defaults")
+    except Exception as e:
+        print(f"⚠️  Could not reset coefficients: {e}")
     
     return final_winner
 

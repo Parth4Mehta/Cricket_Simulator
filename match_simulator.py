@@ -2,7 +2,7 @@ import random
 import time
 from teams import get_teams
 import database
-from config_manager import get_profile, list_profiles, get_default_profile
+from config_manager import get_profile, list_profiles, get_default_profile, update_advanced_profile, reset_advanced_profile
 
 # Global game coefficients - initialized with default profile
 FOUR_COEFF = 0.02
@@ -43,25 +43,96 @@ def load_profile_default():
 
 def choose_profile():
     """Prompt user to pick a difficulty profile."""
-    print("\n=== Choose Game Difficulty ===")
-    profiles = list_profiles()
-    profile_list = list(profiles.items())
+    print("\n" + "="*70)
+    print("GAME DIFFICULTY CONFIGURATION")
+    print("="*70)
+    profiles = list(list_profiles().items())
     
-    for idx, (key, label) in enumerate(profile_list, 1):
+    # Show only main difficulty options (excluding advanced from main menu)
+    main_profiles = [(k, v) for k, v in profiles if k != "advanced"]
+    
+    for idx, (key, label) in enumerate(main_profiles, 1):
         print(f"{idx}. {label}")
+    print(f"{len(main_profiles) + 1}. Advanced Controls (Custom Coefficients)")
     
     while True:
-        choice = input(f"Enter 1-{len(profile_list)} (default 1): ").strip() or "1"
+        choice = input(f"\nSelect option (1-{len(main_profiles) + 1}): ").strip()
         try:
             idx = int(choice) - 1
-            if 0 <= idx < len(profile_list):
-                profile_key, _ = profile_list[idx]
+            
+            if idx == len(main_profiles):  # Advanced Controls
+                configure_advanced_controls()
+                return
+            elif 0 <= idx < len(main_profiles):
+                profile_key, _ = main_profiles[idx]
                 load_profile(profile_key)
                 print()
                 return
         except ValueError:
             pass
-        print(f"Invalid choice. Enter 1-{len(profile_list)}")
+        print(f"Invalid choice. Enter 1-{len(main_profiles) + 1}")
+
+
+def configure_advanced_controls():
+    """Interactive menu for tweaking game coefficients."""
+    print("\n" + "="*70)
+    print("ADVANCED CONTROLS - CUSTOM COEFFICIENTS")
+    print("="*70)
+    print("\nThese coefficients control game behavior. Adjust them to customize gameplay.")
+    print("(Coefficients apply only during league play, reset to Balanced after league ends)\n")
+    
+    # Get current balanced (default) coefficients
+    balanced = get_profile("balanced")
+    current = get_profile("advanced")
+    
+    coeff_descriptions = {
+        "four_coeff": ("Probability of hitting a 4", "Higher = more boundaries"),
+        "six_coeff": ("Probability of hitting a 6", "Higher = more sixes"),
+        "wicket_coeff": ("Base wicket probability", "Higher = more wickets"),
+        "dot_ball_coeff": ("Probability of a dot ball", "Higher = fewer runs"),
+        "batsman_six_boost": ("Batsman-specific 6 boost", "Higher = star batsmen hit more sixes"),
+        "batsman_four_boost": ("Batsman-specific 4 boost", "Higher = star batsmen hit more fours"),
+        "bowler_wicket_boost": ("Bowler-specific wicket boost", "Higher = star bowlers get more wickets"),
+    }
+    
+    coefficients = {}
+    
+    for key, (description, hint) in coeff_descriptions.items():
+        print("\n" + "-" * 70)
+        default_val = balanced[key]
+        current_val = current.get(key, default_val)
+        
+        print(f"📊 {description}")
+        print(f"   Default (Balanced): {default_val}")
+        print(f"   Current value: {current_val}")
+        print(f"   💡 Hint: {hint}")
+        
+        while True:
+            try:
+                user_input = input(f"   Enter new value (or press Enter to keep {current_val}): ").strip()
+                if not user_input:
+                    coefficients[key] = current_val
+                    break
+                val = float(user_input)
+                if val < 0:
+                    print("   ❌ Value must be non-negative!")
+                    continue
+                coefficients[key] = val
+                print(f"   ✅ Set to {val}")
+                break
+            except ValueError:
+                print("   ❌ Invalid input! Enter a decimal number.")
+        
+    # Save custom coefficients
+    try:
+        update_advanced_profile(coefficients)
+        print("\n" + "="*70)
+        print("✅ Custom coefficients saved!")
+        print("="*70)
+        load_profile("advanced")
+    except Exception as e:
+        print(f"\n❌ Error saving coefficients: {e}")
+        load_profile("balanced")
 
 
 def choose_profile_default():

@@ -6,7 +6,7 @@
       "four_coeff": 0.015,
       "six_coeff": 0.008,
       "wicket_coeff": 0.011,
-      "dot_ball_coeff": 0.50,
+      "dot_ball_coeff": 0.5,
       "batsman_six_boost": 0.006,
       "batsman_four_boost": 0.012,
       "bowler_wicket_boost": 0.004
@@ -30,8 +30,19 @@
       "wicket_coeff": 0.016,
       "dot_ball_coeff": 0.35,
       "batsman_six_boost": 0.01,
-      "batsman_four_boost": 0.020,
+      "batsman_four_boost": 0.02,
       "bowler_wicket_boost": 0.009
+    },
+    "advanced": {
+      "label": "Advanced (Custom)",
+      "description": "Custom coefficients configured by user",
+      "four_coeff": 0.02,
+      "six_coeff": 0.02,
+      "wicket_coeff": 0.013,
+      "dot_ball_coeff": 0.7,
+      "batsman_six_boost": 0.01,
+      "batsman_four_boost": 0.02,
+      "bowler_wicket_boost": 0.006
     }
   },
   "default_profile": "balanced",
