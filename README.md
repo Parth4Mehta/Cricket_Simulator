@@ -11,8 +11,8 @@ A Python-based cricket league simulator that uses player statistics to simulate 
 2. [Installation](#installation)
 3. [Usage](#usage)
 4. [Configuration](#configuration)
-5. [Project Structure](#project-structure)
-6. [**QUICKSTART** (2-Minute Setup)](#-quickstart--2-minute-setup)
+5. [Game Mechanics](#game-mechanics)
+6. [Database](#database)
 7. [**CONTRIBUTING** (Developer Guide)](#-contributing--developer-guide)
 
 ---
@@ -103,13 +103,6 @@ Interactive menu options:
 6. **Configure Game Difficulty** - Choose: Conservative, Balanced, Aggressive, or Advanced
 7. **Exit**
 
-### Direct Access
-
-```bash
-python league_simulator.py    # League with team selection
-python match_simulator.py     # Single match direct
-python top_players.py         # Show top players stats
-```
 
 ## Configuration
 
@@ -131,16 +124,7 @@ Edit `config.json` to customize game difficulty:
 }
 ```
 
-### Available Profiles
-
-| Profile | Description |
-|---------|-------------|
-| Conservative | Fewer boundaries & wickets, defensive gameplay |
-| Balanced | Default, well-rounded gameplay |
-| Aggressive | More boundaries, offensive gameplay |
-| Advanced | Custom coefficients (interactive tweaking) |
-
-### Advanced Controls
+### Advanced Controls in Game Profile
 
 Select "Advanced Controls" during difficulty configuration to interactively adjust all 7 coefficients:
 - Shows default (Balanced) value for reference
@@ -148,48 +132,6 @@ Select "Advanced Controls" during difficulty configuration to interactively adju
 - Provides hints for each coefficient
 - Updates are saved and used during league play
 - **Automatically reset to Balanced after league ends**
-
----
-
-## Project Structure
-
-```
-CricSim/
-├── main.py                    # Entry point - interactive menu
-├── match_simulator.py         # Core match simulation engine
-├── league_simulator.py        # League & playoff management
-├── teams.py                   # Team & player definitions
-├── database.py                # Statistics persistence
-├── config_manager.py          # Configuration management
-├── config.json                # Difficulty profiles & settings
-├── top_players.py             # Player statistics analysis
-├── LICENSE
-├── README.md                  # This file
-├── requirements.txt           # Optional dependencies
-├── .gitignore
-└── database/                  # Generated (ignored in git)
-    ├── player_stats.json
-    ├── team_stats.json
-    └── match_stats/           # Individual match records
-```
-
----
-
-## Teams
-
-Default 10 IPL teams:
-- Mumbai Indians (MI)
-- Chennai Super Kings (CSK)
-- Sunrisers Hyderabad (SRH)
-- Royal Challengers Bangalore (RCB)
-- Rajasthan Royals (RR)
-- Punjab Kings (PBKS)
-- Lucknow Super Giants (LSG)
-- Gujarat Titans (GT)
-- Delhi Capitals (DC)
-- Kolkata Knight Riders (KKR)
-
-Extend by editing `teams.py`.
 
 ---
 
@@ -332,17 +274,5 @@ git push origin feature/your-feature-name
 Open a GitHub issue for discussions or questions!
 
 ---
-
-## License
-
-[Your License Here]
-
-## Summary
-
-- **Easy to use**: No setup, just `python main.py`
-- **Highly customizable**: 4 difficulty levels + advanced controls
-- **Well-documented**: Code is commented, README is comprehensive
-- **Extensible**: Add teams, profiles, and statistics easily
-- **Contribution-friendly**: Clear guidelines and areas for contribution
 
 Enjoy CricSim! 🏏
