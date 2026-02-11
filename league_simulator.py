@@ -96,23 +96,25 @@ def simulate_league(selected_teams=None):
     print("PLAYOFFS")
     print("="*60)
     
-    # Sort by points (desc) and then by team name for deterministic ordering
-    top_teams = sorted(points_in_this_season.items(), key=lambda x: (-x[1], x[0]))
+    # Get standings sorted by points and NRR (already calculated in database)
+    table = database.get_points_table_sorted()
     
-    if len(selected_teams) >= 4:
-        teams_for_playoffs = top_teams[:4]
-    elif len(selected_teams) == 3:
-        teams_for_playoffs = top_teams[:3]
+    # Filter to only selected teams
+    table_filtered = [row for row in table if row['team'] in selected_teams]
+    
+    if len(table_filtered) >= 4:
+        teams_for_playoffs = table_filtered[:4]
+    elif len(table_filtered) >= 2:
+        teams_for_playoffs = table_filtered[:3] if len(table_filtered) == 3 else table_filtered
     else:
         # Just 2 teams, go straight to final
         return simulate_match(selected_teams[0], selected_teams[1], True)
     
-    playoff_teams = [t[0] for t in teams_for_playoffs]
+    playoff_teams = [row['team'] for row in teams_for_playoffs]
     
     print(f"\nTop {len(playoff_teams)} teams qualified:")
-    for idx, team in enumerate(playoff_teams, 1):
-        points = points_in_this_season[team]
-        print(f"{idx}. {team} ({points} points)")
+    for idx, row in enumerate(teams_for_playoffs, 1):
+        print(f"{idx}. {row['team']} ({row['points']} pts, NRR: {row['nrr']:+.2f})")
     
     if len(playoff_teams) == 2:
         print("\n--- FINAL ---")
