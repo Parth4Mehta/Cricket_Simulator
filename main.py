@@ -25,12 +25,13 @@ def show_main_menu():
     print("1. Simulate a League (Double Round-Robin + Playoffs)")
     print("2. Simulate a Single Match")
     print("3. View Current Stats")
-    print("4. Clear Database & Start Fresh")
-    print("5. Configure Game Difficulty")
-    print("6. Exit")
+    print("4. View Full Player Stats (Top Players)")
+    print("5. Clear Database & Start Fresh")
+    print("6. Configure Game Difficulty")
+    print("7. Exit")
     print()
     
-    choice = input("Select an option (1-6): ").strip()
+    choice = input("Select an option (1-7): ").strip()
     return choice
 
 
@@ -102,6 +103,27 @@ def menu_view_stats():
         print(f"Error displaying stats: {e}")
 
 
+def menu_view_full_stats():
+    """View full player statistics (top players across all categories)."""
+    print("\n" + "="*70)
+    print("FULL PLAYER STATISTICS")
+    print("="*70)
+    print("\nFetching and displaying comprehensive player statistics...")
+    print("(Running top_players analysis)\n")
+    
+    try:
+        # Import and run top_players main function
+        from top_players import main as top_players_main
+        sys.argv = [sys.argv[0], "--print"]  # Set args to print output
+        top_players_main()
+    except KeyboardInterrupt:
+        print("\n\nFull stats display cancelled.")
+    except Exception as e:
+        print(f"Error displaying full stats: {e}")
+        import traceback
+        traceback.print_exc()
+
+
 def menu_clear_database():
     """Clear database and start fresh."""
     print("\n" + "="*70)
@@ -145,14 +167,16 @@ def main():
             elif choice == "3":
                 menu_view_stats()
             elif choice == "4":
-                menu_clear_database()
+                menu_view_full_stats()
             elif choice == "5":
-                menu_configure()
+                menu_clear_database()
             elif choice == "6":
+                menu_configure()
+            elif choice == "7":
                 print("\nThanks for using CricSim! Goodbye!\n")
                 sys.exit(0)
             else:
-                print("Invalid choice! Please select 1-6.")
+                print("Invalid choice! Please select 1-7.")
         
         except KeyboardInterrupt:
             print("\n\nInterrupted by user.")

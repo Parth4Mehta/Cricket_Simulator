@@ -217,6 +217,35 @@ def compute_categories(players, match_bowling_agg):
         for name, info, _ in bowling_avg_worst
     ]
 
+    # Best Batting Average (min 300 runs) - runs / dismissals (outs)
+    batting_avg_list = []
+    for player, stats in players.items():
+        runs = stats.get("runs", 0)
+        if runs < 300:  # Skip if less than 300 runs
+            continue
+        outs = stats.get("outs", 0)
+        not_outs = stats.get("not_outs", 0)
+        matches = stats.get("matches", 0)
+        
+        # Batting average = runs / dismissals (only count players with at least 1 dismissal)
+        if outs > 0:
+            avg = runs / outs
+            batting_avg_list.append((player, {"batting_average": round(avg, 2), "runs": runs, "outs": outs, "not_outs": not_outs}, avg))
+    
+    # Sort by batting average descending (higher is better)
+    batting_avg_sorted = sorted(batting_avg_list, key=lambda t: t[2], reverse=True)[:10]
+    results["best_batting_average"] = [
+        {"name": name, "batting_average": info["batting_average"], "runs": info["runs"], "outs": info["outs"], "not_outs": info["not_outs"]}
+        for name, info, _ in batting_avg_sorted
+    ]
+
+    # Worst Batting Average (min 300 runs) - lowest average
+    batting_avg_worst = sorted(batting_avg_list, key=lambda t: t[2])[:10]
+    results["worst_batting_average"] = [
+        {"name": name, "batting_average": info["batting_average"], "runs": info["runs"], "outs": info["outs"], "not_outs": info["not_outs"]}
+        for name, info, _ in batting_avg_worst
+    ]
+
     return results
 
 
@@ -317,6 +346,18 @@ def main():
                     wickets = it.get('wickets', 0)
                     runs = it.get('runs', 0)
                     print(f"  {i:2}. {name:<30} Avg: {avg} ({runs}R in {wickets}W)")
+                elif cat == "best_batting_average":
+                    avg = it.get('batting_average', 0)
+                    runs = it.get('runs', 0)
+                    outs = it.get('outs', 0)
+                    not_outs = it.get('not_outs', 0)
+                    print(f"  {i:2}. {name:<30} Avg: {avg} ({runs} runs, {outs} outs, {not_outs}* NO)")
+                elif cat == "worst_batting_average":
+                    avg = it.get('batting_average', 0)
+                    runs = it.get('runs', 0)
+                    outs = it.get('outs', 0)
+                    not_outs = it.get('not_outs', 0)
+                    print(f"  {i:2}. {name:<30} Avg: {avg} ({runs} runs, {outs} outs, {not_outs}* NO)")
                 else:
                     print(f"  {i:2}. {it}")
 

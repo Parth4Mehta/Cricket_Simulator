@@ -131,6 +131,8 @@ def update_players_from_match(team_name, batting_team, batting_stats, bowling_st
                 "fours": 0,
                 "sixes": 0,
                 "matches": 0,
+                "outs": 0,
+                "not_outs": 0,
                 "highest_score": 0,
                 "wickets": 0,
                 "balls_bowled": 0,
@@ -141,12 +143,20 @@ def update_players_from_match(team_name, batting_team, batting_stats, bowling_st
         balls = st.get("balls", 0)
         fours = st.get("4s", 0)
         sixes = st.get("6s", 0)
+        dismissal = st.get("dismissal", "not out").strip().lower()
 
         p["runs"] += runs
         p["balls_faced"] += balls
         p["fours"] += fours
         p["sixes"] += sixes
         p["matches"] += 1
+        
+        # Track out/not out
+        if dismissal == "not out":
+            p["not_outs"] += 1
+        else:
+            p["outs"] += 1
+        
         if runs > p["highest_score"]:
             p["highest_score"] = runs
 
@@ -160,6 +170,8 @@ def update_players_from_match(team_name, batting_team, batting_stats, bowling_st
                 "fours": 0,
                 "sixes": 0,
                 "matches": 0,
+                "outs": 0,
+                "not_outs": 0,
                 "highest_score": 0,
                 "wickets": 0,
                 "balls_bowled": 0,
