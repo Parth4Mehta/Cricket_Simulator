@@ -13,6 +13,10 @@ BATSMAN_SIX_BOOST = 0.008
 BATSMAN_FOUR_BOOST = 0.016
 BOWLER_WICKET_BOOST = 0.006
 
+# Global timer settings for ball-by-ball simulation
+BALL_TIMER = 0.7  # seconds between balls (default)
+INNINGS_TIMER = 20  # seconds between innings (default)
+
 
 def load_profile(profile_name):
     """Load a difficulty profile and set global coefficients."""
@@ -133,6 +137,65 @@ def configure_advanced_controls():
     except Exception as e:
         print(f"\n❌ Error saving coefficients: {e}")
         load_profile("balanced")
+
+
+def configure_ball_by_ball_timers():
+    """Interactive menu for configuring ball-by-ball simulation timers."""
+    global BALL_TIMER, INNINGS_TIMER
+    
+    print("\n" + "="*70)
+    print("BALL-BY-BALL TIMER CONFIGURATION")
+    print("="*70)
+    print("\nConfigure the delay timers for ball-by-ball simulation mode.")
+    print("These timers control the pace of the simulation for better viewing.\n")
+    
+    # Configure ball timer
+    print("-" * 70)
+    print("⏱️  Timer between balls")
+    print(f"   Current default: {BALL_TIMER} seconds")
+    print("   💡 Hint: Controls delay between each ball delivery")
+    
+    while True:
+        try:
+            user_input = input(f"   Enter new value in seconds (or press Enter to keep {BALL_TIMER}): ").strip()
+            if not user_input:
+                break
+            val = float(user_input)
+            if val < 0:
+                print("   ❌ Value must be non-negative!")
+                continue
+            BALL_TIMER = val
+            print(f"   ✅ Ball timer set to {val} seconds")
+            break
+        except ValueError:
+            print("   ❌ Invalid input! Enter a decimal number.")
+    
+    # Configure innings timer
+    print("\n" + "-" * 70)
+    print("⏱️  Timer between innings")
+    print(f"   Current default: {INNINGS_TIMER} seconds")
+    print("   💡 Hint: Controls delay between first and second innings")
+    
+    while True:
+        try:
+            user_input = input(f"   Enter new value in seconds (or press Enter to keep {INNINGS_TIMER}): ").strip()
+            if not user_input:
+                break
+            val = float(user_input)
+            if val < 0:
+                print("   ❌ Value must be non-negative!")
+                continue
+            INNINGS_TIMER = val
+            print(f"   ✅ Innings timer set to {val} seconds")
+            break
+        except ValueError:
+            print("   ❌ Invalid input! Enter a decimal number.")
+    
+    print("\n" + "="*70)
+    print("✅ Timer configuration complete!")
+    print(f"   Ball timer: {BALL_TIMER} seconds")
+    print(f"   Innings timer: {INNINGS_TIMER} seconds")
+    print("="*70)
 
 
 def choose_profile_default():
@@ -309,7 +372,7 @@ def simulate_innings(batting_team, bowling_team, ball_by_ball=False, target=None
                     per_over_tokens.append('W')
                 # overwrite same line for current over
                 print(f"Over {over_num+1}: {' '.join(per_over_tokens)}", end='\r', flush=True)
-                time.sleep(0.7)
+                time.sleep(BALL_TIMER)
             # if chasing and reached target, end innings immediately
             if target is not None and score >= target:
                 # ensure final over line printed properly
@@ -387,7 +450,7 @@ def simulate_match(teamA_name, teamB_name, ball_by_ball=False):
     print_scorecard(teamA_name, A, A_score, A_wk, A_bat, A_bowl, A_fall)
 
     if ball_by_ball:
-        time.sleep(20)
+        time.sleep(INNINGS_TIMER)
     # Second innings (chase). target = A_score + 1
     target = A_score + 1
     B_score, B_wk, B_bat, B_bowl, B_fall = simulate_innings(B, A, ball_by_ball=ball_by_ball, target=target, team_name=teamB_name)

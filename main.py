@@ -5,7 +5,7 @@ Main entry point for the application.
 """
 
 import sys
-from match_simulator import choose_profile, choose_profile_default, simulate_match
+from match_simulator import choose_profile, choose_profile_default, simulate_match, configure_ball_by_ball_timers
 from league_simulator import simulate_league, select_teams
 from database import print_caps_and_table, clear_database, get_points_table_sorted
 from teams import get_teams
@@ -28,10 +28,11 @@ def show_main_menu():
     print("4. View Full Player Stats (Top Players)")
     print("5. Clear Database & Start Fresh")
     print("6. Configure Game Difficulty")
-    print("7. Exit")
+    print("7. Configure Ball-by-Ball Timers")
+    print("8. Exit")
     print()
     
-    choice = input("Select an option (1-7): ").strip()
+    choice = input("Select an option (1-8): ").strip()
     return choice
 
 
@@ -149,6 +150,11 @@ def menu_configure():
     choose_profile()
 
 
+def menu_configure_timers():
+    """Configure ball-by-ball timers."""
+    configure_ball_by_ball_timers()
+
+
 def main():
     """Main application loop."""
     print_banner()
@@ -173,10 +179,12 @@ def main():
             elif choice == "6":
                 menu_configure()
             elif choice == "7":
+                menu_configure_timers()
+            elif choice == "8":
                 print("\nThanks for using CricSim! Goodbye!\n")
                 sys.exit(0)
             else:
-                print("Invalid choice! Please select 1-7.")
+                print("Invalid choice! Please select 1-8.")
         
         except KeyboardInterrupt:
             print("\n\nInterrupted by user.")

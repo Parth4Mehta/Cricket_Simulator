@@ -65,6 +65,13 @@ def simulate_league(selected_teams=None):
     if selected_teams is None:
         selected_teams = select_teams()
     
+    # Ask user if they want ball-by-ball for playoffs
+    print("\n" + "="*60)
+    print("Playoff Configuration")
+    print("="*60)
+    playoff_ball_by_ball_choice = input("Do you want ball-by-ball simulation for playoff matches? (y/n, default: n): ").strip().lower()
+    playoff_ball_by_ball = (playoff_ball_by_ball_choice == "y")
+    
     # Initialize points table
     points_in_this_season = {t: 0 for t in selected_teams}
     
@@ -108,7 +115,7 @@ def simulate_league(selected_teams=None):
         teams_for_playoffs = table_filtered[:3] if len(table_filtered) == 3 else table_filtered
     else:
         # Just 2 teams, go straight to final
-        return simulate_match(selected_teams[0], selected_teams[1], True)
+        return simulate_match(selected_teams[0], selected_teams[1], playoff_ball_by_ball)
     
     playoff_teams = [row['team'] for row in teams_for_playoffs]
     
@@ -119,32 +126,32 @@ def simulate_league(selected_teams=None):
     if len(playoff_teams) == 2:
         print("\n--- FINAL ---")
         input("Press Enter to simulate the final...")
-        final_winner = simulate_match(playoff_teams[0], playoff_teams[1], True)
+        final_winner = simulate_match(playoff_teams[0], playoff_teams[1], playoff_ball_by_ball)
     elif len(playoff_teams) == 3:
         print("\n--- Eliminator ---")
         input("Press Enter to simulate eliminator (2nd vs 3rd)...")
-        eliminator_winner = simulate_match(playoff_teams[1], playoff_teams[2], True)
+        eliminator_winner = simulate_match(playoff_teams[1], playoff_teams[2], playoff_ball_by_ball)
         
         print("\n--- FINAL ---")
         input("Press Enter to simulate the final...")
-        final_winner = simulate_match(playoff_teams[0], eliminator_winner, True)
+        final_winner = simulate_match(playoff_teams[0], eliminator_winner, playoff_ball_by_ball)
     else:  # 4 teams
         print("\n--- Qualifier 1 (1st vs 2nd) ---")
         input("Press Enter to simulate Qualifier 1...")
-        q1_winner = simulate_match(playoff_teams[0], playoff_teams[1], True)
+        q1_winner = simulate_match(playoff_teams[0], playoff_teams[1], playoff_ball_by_ball)
         q1_loser = playoff_teams[1] if q1_winner == playoff_teams[0] else playoff_teams[0]
         
         print("\n--- Eliminator (3rd vs 4th) ---")
         input("Press Enter to simulate Eliminator...")
-        eliminator_winner = simulate_match(playoff_teams[2], playoff_teams[3], True)
+        eliminator_winner = simulate_match(playoff_teams[2], playoff_teams[3], playoff_ball_by_ball)
         
         print("\n--- Qualifier 2 (Loser Q1 vs Winner Eliminator) ---")
         input("Press Enter to simulate Qualifier 2...")
-        q2_winner = simulate_match(q1_loser, eliminator_winner, True)
+        q2_winner = simulate_match(q1_loser, eliminator_winner, playoff_ball_by_ball)
         
         print("\n--- FINAL ---")
         input("Press Enter to simulate the final...")
-        final_winner = simulate_match(q1_winner, q2_winner, True)
+        final_winner = simulate_match(q1_winner, q2_winner, playoff_ball_by_ball)
     
     print(f"\n{'='*60}")
     print(f"🏆 LEAGUE CHAMPION: {final_winner} 🏆")

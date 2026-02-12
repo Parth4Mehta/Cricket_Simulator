@@ -26,6 +26,10 @@ import os
 import json
 import argparse
 from collections import defaultdict
+from rich.console import Console
+from rich.table import Table
+from rich.panel import Panel
+from rich.text import Text
 
 DEFAULT_SOURCES = [
     os.path.join("database", "match_stats_player_stats.json"),
@@ -277,89 +281,195 @@ def main():
 
     results = compute_categories(players, match_bowling_agg)
 
-    # Always print results to terminal
+    # Display results using Rich library
+    console = Console()
+    
     for cat, items in results.items():
-        print("\n" + "="*60)
-        print(f"  {cat.upper().replace('_', ' ')}")
-        print("="*60)
-        if not items:
-            print("  No data available")
-        else:
+        # Create a table for each category
+        title = cat.upper().replace('_', ' ')
+        
+        # Determine table columns based on category
+        if cat == "most_runs":
+            table = Table(title=f"🟠 {title} (ORANGE CAP)", show_header=True, header_style="bold magenta")
+            table.add_column("Rank", style="cyan", width=6)
+            table.add_column("Player", style="green", width=30)
+            table.add_column("Runs", style="yellow", justify="right")
+            table.add_column("Matches", justify="right")
+            
             for i, it in enumerate(items, 1):
-                name = it.get("name", "Unknown")
-                # Format based on category
-                if cat == "most_runs":
-                    runs = it.get('runs', 0)
-                    matches = it.get('matches', 0)
-                    print(f"  {i:2}. {name:<30} Runs: {runs} (🟠 ORANGE CAP) | Matches: {matches}")
-                elif cat == "most_wickets":
-                    wickets = it.get('wickets', 0)
-                    matches = it.get('matches', 0)
-                    print(f"  {i:2}. {name:<30} Wickets: {wickets} (🟣 PURPLE CAP) | Matches: {matches}")
-                elif cat == "least_wickets":
-                    wickets = it.get('wickets', 0)
-                    matches = it.get('matches', 0)
-                    print(f"  {i:2}. {name:<30} Wickets: {wickets} | Matches: {matches}")
-                elif cat == "highest_score":
-                    score = it.get('highest_score', 0)
-                    balls = it.get('balls', 0)
-                    if balls > 0:
-                        sr = (score / balls) * 100
-                        print(f"  {i:2}. {name:<30} {score} ({balls} balls, SR: {sr:.2f})")
-                    else:
-                        print(f"  {i:2}. {name:<30} Highest Score: {score}")
-                elif cat == "most_fours":
-                    print(f"  {i:2}. {name:<30} Fours: {it.get('fours', 0)}")
-                elif cat == "most_sixes":
-                    print(f"  {i:2}. {name:<30} Sixes: {it.get('sixes', 0)}")
-                elif cat == "highest_strike_rate":
-                    sr = it.get('strike_rate', 0)
-                    runs = it.get('runs', 0)
-                    balls = it.get('balls_faced', 0)
-                    print(f"  {i:2}. {name:<30} SR: {sr}% ({runs} runs, {balls} balls)")
-                elif cat == "lowest_strike_rate":
-                    sr = it.get('strike_rate', 0)
-                    runs = it.get('runs', 0)
-                    balls = it.get('balls_faced', 0)
-                    print(f"  {i:2}. {name:<30} SR: {sr}% ({runs} runs, {balls} balls)")
-                elif cat == "best_bowling":
-                    wickets = it.get('wickets', 0)
-                    runs = it.get('runs', 'N/A')
-                    print(f"  {i:2}. {name:<30} {wickets}W/{runs}R")
-                elif cat == "best_economy":
-                    econ = it.get('economy', 0)
-                    runs = it.get('runs_conceded', 0)
-                    balls = it.get('balls_bowled', 0)
-                    print(f"  {i:2}. {name:<30} Economy: {econ} ({runs} runs, {balls} balls)")
-                elif cat == "worst_economy":
-                    econ = it.get('economy', 0)
-                    runs = it.get('runs_conceded', 0)
-                    balls = it.get('balls_bowled', 0)
-                    print(f"  {i:2}. {name:<30} Economy: {econ} ({runs} runs, {balls} balls)")
-                elif cat == "best_bowling_average":
-                    avg = it.get('bowling_average', 0)
-                    wickets = it.get('wickets', 0)
-                    runs = it.get('runs', 0)
-                    print(f"  {i:2}. {name:<30} Avg: {avg} ({runs}R in {wickets}W)")
-                elif cat == "worst_bowling_average":
-                    avg = it.get('bowling_average', 0)
-                    wickets = it.get('wickets', 0)
-                    runs = it.get('runs', 0)
-                    print(f"  {i:2}. {name:<30} Avg: {avg} ({runs}R in {wickets}W)")
-                elif cat == "best_batting_average":
-                    avg = it.get('batting_average', 0)
-                    runs = it.get('runs', 0)
-                    outs = it.get('outs', 0)
-                    not_outs = it.get('not_outs', 0)
-                    print(f"  {i:2}. {name:<30} Avg: {avg} ({runs} runs, {outs} outs, {not_outs}* NO)")
-                elif cat == "worst_batting_average":
-                    avg = it.get('batting_average', 0)
-                    runs = it.get('runs', 0)
-                    outs = it.get('outs', 0)
-                    not_outs = it.get('not_outs', 0)
-                    print(f"  {i:2}. {name:<30} Avg: {avg} ({runs} runs, {outs} outs, {not_outs}* NO)")
-                else:
-                    print(f"  {i:2}. {it}")
+                table.add_row(str(i), it.get("name", "Unknown"), str(it.get('runs', 0)), str(it.get('matches', 0)))
+                
+        elif cat == "most_wickets":
+            table = Table(title=f"🟣 {title} (PURPLE CAP)", show_header=True, header_style="bold magenta")
+            table.add_column("Rank", style="cyan", width=6)
+            table.add_column("Player", style="green", width=30)
+            table.add_column("Wickets", style="red", justify="right")
+            table.add_column("Matches", justify="right")
+            
+            for i, it in enumerate(items, 1):
+                table.add_row(str(i), it.get("name", "Unknown"), str(it.get('wickets', 0)), str(it.get('matches', 0)))
+                
+        elif cat == "least_wickets":
+            table = Table(title=title, show_header=True, header_style="bold magenta")
+            table.add_column("Rank", style="cyan", width=6)
+            table.add_column("Player", style="green", width=30)
+            table.add_column("Wickets", justify="right")
+            table.add_column("Matches", justify="right")
+            
+            for i, it in enumerate(items, 1):
+                table.add_row(str(i), it.get("name", "Unknown"), str(it.get('wickets', 0)), str(it.get('matches', 0)))
+                
+        elif cat == "highest_score":
+            table = Table(title=title, show_header=True, header_style="bold magenta")
+            table.add_column("Rank", style="cyan", width=6)
+            table.add_column("Player", style="green", width=30)
+            table.add_column("Score", style="yellow", justify="right")
+            table.add_column("Balls", justify="right")
+            table.add_column("SR", justify="right")
+            
+            for i, it in enumerate(items, 1):
+                score = it.get('highest_score', 0)
+                balls = it.get('balls', 0)
+                sr = f"{(score / balls) * 100:.2f}" if balls > 0 else "0.00"
+                table.add_row(str(i), it.get("name", "Unknown"), str(score), str(balls), sr)
+                
+        elif cat == "most_fours":
+            table = Table(title=title, show_header=True, header_style="bold magenta")
+            table.add_column("Rank", style="cyan", width=6)
+            table.add_column("Player", style="green", width=30)
+            table.add_column("Fours", style="blue", justify="right")
+            
+            for i, it in enumerate(items, 1):
+                table.add_row(str(i), it.get("name", "Unknown"), str(it.get('fours', 0)))
+                
+        elif cat == "most_sixes":
+            table = Table(title=title, show_header=True, header_style="bold magenta")
+            table.add_column("Rank", style="cyan", width=6)
+            table.add_column("Player", style="green", width=30)
+            table.add_column("Sixes", style="red", justify="right")
+            
+            for i, it in enumerate(items, 1):
+                table.add_row(str(i), it.get("name", "Unknown"), str(it.get('sixes', 0)))
+                
+        elif cat == "highest_strike_rate":
+            table = Table(title=title, show_header=True, header_style="bold magenta")
+            table.add_column("Rank", style="cyan", width=6)
+            table.add_column("Player", style="green", width=30)
+            table.add_column("SR", style="yellow", justify="right")
+            table.add_column("Runs", justify="right")
+            table.add_column("Balls", justify="right")
+            
+            for i, it in enumerate(items, 1):
+                table.add_row(str(i), it.get("name", "Unknown"), f"{it.get('strike_rate', 0):.2f}", 
+                             str(it.get('runs', 0)), str(it.get('balls_faced', 0)))
+                
+        elif cat == "lowest_strike_rate":
+            table = Table(title=title, show_header=True, header_style="bold magenta")
+            table.add_column("Rank", style="cyan", width=6)
+            table.add_column("Player", style="green", width=30)
+            table.add_column("SR", justify="right")
+            table.add_column("Runs", justify="right")
+            table.add_column("Balls", justify="right")
+            
+            for i, it in enumerate(items, 1):
+                table.add_row(str(i), it.get("name", "Unknown"), f"{it.get('strike_rate', 0):.2f}", 
+                             str(it.get('runs', 0)), str(it.get('balls_faced', 0)))
+                
+        elif cat == "best_bowling":
+            table = Table(title=title, show_header=True, header_style="bold magenta")
+            table.add_column("Rank", style="cyan", width=6)
+            table.add_column("Player", style="green", width=30)
+            table.add_column("Figures", style="red", justify="right")
+            
+            for i, it in enumerate(items, 1):
+                wickets = it.get('wickets', 0)
+                runs = it.get('runs', 'N/A')
+                table.add_row(str(i), it.get("name", "Unknown"), f"{wickets}W/{runs}R")
+                
+        elif cat == "best_economy":
+            table = Table(title=title, show_header=True, header_style="bold magenta")
+            table.add_column("Rank", style="cyan", width=6)
+            table.add_column("Player", style="green", width=30)
+            table.add_column("Economy", style="green", justify="right")
+            table.add_column("Runs", justify="right")
+            table.add_column("Balls", justify="right")
+            
+            for i, it in enumerate(items, 1):
+                table.add_row(str(i), it.get("name", "Unknown"), f"{it.get('economy', 0):.3f}", 
+                             str(it.get('runs_conceded', 0)), str(it.get('balls_bowled', 0)))
+                
+        elif cat == "worst_economy":
+            table = Table(title=title, show_header=True, header_style="bold magenta")
+            table.add_column("Rank", style="cyan", width=6)
+            table.add_column("Player", style="green", width=30)
+            table.add_column("Economy", style="red", justify="right")
+            table.add_column("Runs", justify="right")
+            table.add_column("Balls", justify="right")
+            
+            for i, it in enumerate(items, 1):
+                table.add_row(str(i), it.get("name", "Unknown"), f"{it.get('economy', 0):.3f}", 
+                             str(it.get('runs_conceded', 0)), str(it.get('balls_bowled', 0)))
+                
+        elif cat == "best_bowling_average":
+            table = Table(title=title, show_header=True, header_style="bold magenta")
+            table.add_column("Rank", style="cyan", width=6)
+            table.add_column("Player", style="green", width=30)
+            table.add_column("Average", style="green", justify="right")
+            table.add_column("Wickets", justify="right")
+            table.add_column("Runs", justify="right")
+            
+            for i, it in enumerate(items, 1):
+                table.add_row(str(i), it.get("name", "Unknown"), f"{it.get('bowling_average', 0):.2f}", 
+                             str(it.get('wickets', 0)), str(it.get('runs', 0)))
+                
+        elif cat == "worst_bowling_average":
+            table = Table(title=title, show_header=True, header_style="bold magenta")
+            table.add_column("Rank", style="cyan", width=6)
+            table.add_column("Player", style="green", width=30)
+            table.add_column("Average", style="red", justify="right")
+            table.add_column("Wickets", justify="right")
+            table.add_column("Runs", justify="right")
+            
+            for i, it in enumerate(items, 1):
+                table.add_row(str(i), it.get("name", "Unknown"), f"{it.get('bowling_average', 0):.2f}", 
+                             str(it.get('wickets', 0)), str(it.get('runs', 0)))
+                
+        elif cat == "best_batting_average":
+            table = Table(title=title, show_header=True, header_style="bold magenta")
+            table.add_column("Rank", style="cyan", width=6)
+            table.add_column("Player", style="green", width=30)
+            table.add_column("Average", style="yellow", justify="right")
+            table.add_column("Runs", justify="right")
+            table.add_column("Outs", justify="right")
+            table.add_column("Not Outs", justify="right")
+            
+            for i, it in enumerate(items, 1):
+                table.add_row(str(i), it.get("name", "Unknown"), f"{it.get('batting_average', 0):.2f}", 
+                             str(it.get('runs', 0)), str(it.get('outs', 0)), str(it.get('not_outs', 0)))
+                
+        elif cat == "worst_batting_average":
+            table = Table(title=title, show_header=True, header_style="bold magenta")
+            table.add_column("Rank", style="cyan", width=6)
+            table.add_column("Player", style="green", width=30)
+            table.add_column("Average", justify="right")
+            table.add_column("Runs", justify="right")
+            table.add_column("Outs", justify="right")
+            table.add_column("Not Outs", justify="right")
+            
+            for i, it in enumerate(items, 1):
+                table.add_row(str(i), it.get("name", "Unknown"), f"{it.get('batting_average', 0):.2f}", 
+                             str(it.get('runs', 0)), str(it.get('outs', 0)), str(it.get('not_outs', 0)))
+        else:
+            table = Table(title=title, show_header=True, header_style="bold magenta")
+            table.add_column("Data", style="white")
+            for i, it in enumerate(items, 1):
+                table.add_row(str(it))
+        
+        if not items:
+            console.print(Panel(f"[yellow]No data available for {title}[/yellow]"))
+        else:
+            console.print(table)
+        console.print()  # Add spacing between tables
 
     if args.output:
         outp = args.output
@@ -369,9 +479,9 @@ def main():
     try:
         with open(outp, "w", encoding="utf-8") as f:
             json.dump(results, f, indent=4)
-        print(f"\nResults written to: {outp}")
+        console.print(f"\n[green]✅ Results written to: {outp}[/green]")
     except Exception as e:
-        print(f"Failed to write output file: {e}")
+        console.print(f"[red]❌ Failed to write output file: {e}[/red]")
 
     return 0
 
