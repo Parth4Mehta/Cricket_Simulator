@@ -225,7 +225,7 @@ def compute_categories(players, match_bowling_agg):
     batting_avg_list = []
     for player, stats in players.items():
         runs = stats.get("runs", 0)
-        if runs < 300:  # Skip if less than 300 runs
+        if runs < 200:  # Skip if less than 200 runs
             continue
         outs = stats.get("outs", 0)
         not_outs = stats.get("not_outs", 0)
