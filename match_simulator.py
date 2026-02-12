@@ -3,6 +3,11 @@ import time
 from teams import get_teams
 import database
 from config_manager import get_profile, list_profiles, get_default_profile, update_advanced_profile, reset_advanced_profile
+from rich.console import Console
+from rich.table import Table
+from rich.panel import Panel
+from rich.text import Text
+from rich import box
 
 # Global game coefficients - initialized with default profile
 FOUR_COEFF = 0.02
@@ -230,6 +235,8 @@ def simulate_innings(batting_team, bowling_team, ball_by_ball=False, target=None
     fall_of_wickets = []
 
     balls_bowled = 0
+    console = Console()
+    
     def _print_over_summary(tokens, over_idx, bowler_obj, bowler_stats_obj, balls_bowled_local, striker_idx_local, non_striker_idx_local):
         # compute runs in over
         over_runs_local = 0
@@ -247,7 +254,26 @@ def simulate_innings(batting_team, bowling_team, ball_by_ball=False, target=None
                     pass
         # finish the current over line
         print()  # end the carriage-returned line
-        # print(f"Over {over_idx+1}  |  {' '.join(tokens)}  | ({over_runs_local} runs)")
+        
+        # Over summary with rich formatting
+        over_text = Text()
+        over_text.append(f"Over {over_idx+1}: ", style="bold cyan")
+        
+        # Color code each ball outcome
+        for token in tokens:
+            if token == '6':
+                over_text.append(token + " ", style="bold red")
+            elif token == '4':
+                over_text.append(token + " ", style="bold blue")
+            elif token == 'W':
+                over_text.append(token + " ", style="bold magenta")
+            elif token == '.':
+                over_text.append(token + " ", style="dim white")
+            else:
+                over_text.append(token + " ", style="yellow")
+        
+        console.print(over_text)
+        
         # batsmen
         b1_idx = striker_idx_local
         b2_idx = non_striker_idx_local
@@ -257,10 +283,22 @@ def simulate_innings(batting_team, bowling_team, ball_by_ball=False, target=None
         b1_balls = batting_stats[b1_idx]["balls"]
         b2_runs = batting_stats[b2_idx]["runs"]
         b2_balls = batting_stats[b2_idx]["balls"]
-        def _fmt_b(idx, name, runs, balls, next_idx):
-            star = '*' if idx == next_idx else ''
-            return f"{name} {runs}({balls}){star}"
-        print("Batsmen:", _fmt_b(b1_idx, b1_name, b1_runs, b1_balls, non_striker_idx_local), "|", _fmt_b(b2_idx, b2_name, b2_runs, b2_balls, non_striker_idx_local))
+        
+        # Batsmen info
+        batsmen_text = Text()
+        batsmen_text.append("Batsmen: ", style="bold white")
+        batsmen_text.append(b1_name, style="cyan")
+        batsmen_text.append(f" {b1_runs}({b1_balls})", style="yellow")
+        if b1_idx == non_striker_idx_local:
+            batsmen_text.append("*", style="bold green")
+        batsmen_text.append(" | ", style="dim white")
+        batsmen_text.append(b2_name, style="cyan")
+        batsmen_text.append(f" {b2_runs}({b2_balls})", style="yellow")
+        if b2_idx == non_striker_idx_local:
+            batsmen_text.append("*", style="bold green")
+        
+        console.print(batsmen_text)
+        
         # bowler stats
         bowler_name = bowler_obj.name
         bb = bowler_stats_obj.get("balls", 0)
@@ -269,9 +307,23 @@ def simulate_innings(batting_team, bowling_team, ball_by_ball=False, target=None
         bow_overs_str = f"{bow_overs}.{bow_rem}"
         bow_runs = bowler_stats_obj.get("runs", 0)
         bow_wk = bowler_stats_obj.get("wickets", 0)
-        print(f"Bowler : {bowler_name} — {bow_overs_str}, {bow_runs}, {bow_wk}")
-        print(f"Total: {score}/{wickets} in {balls_bowled_local//6}.{balls_bowled_local%6} overs")
-        print()
+        
+        bowler_text = Text()
+        bowler_text.append("Bowler : ", style="bold white")
+        bowler_text.append(bowler_name, style="magenta")
+        bowler_text.append(f" — {bow_overs_str}, {bow_runs}, {bow_wk}", style="white")
+        
+        console.print(bowler_text)
+        
+        # Total score
+        total_text = Text()
+        total_text.append("Total: ", style="bold white")
+        total_text.append(f"{score}/{wickets}", style="bold yellow")
+        total_text.append(f" in {balls_bowled_local//6}.{balls_bowled_local%6} overs", style="white")
+        
+        console.print(total_text)
+        console.print()
+        
         # runs required if chasing
         if target is not None:
             runs_needed = max(0, target - score)
@@ -279,7 +331,14 @@ def simulate_innings(batting_team, bowling_team, ball_by_ball=False, target=None
             balls_in_current_over = balls_bowled_local % 6
             overs_str = f"{overs_completed}.{balls_in_current_over}"
             remaining_overs = total_overs - (balls_bowled_local / 6)
-            print(f"Runs required: {runs_needed} in {remaining_overs} overs")
+            
+            runs_req_text = Text()
+            runs_req_text.append("Runs required: ", style="bold white")
+            runs_req_text.append(f"{runs_needed}", style="bold cyan")
+            runs_req_text.append(f" in {remaining_overs:.1f} overs", style="white")
+            
+            console.print(runs_req_text)
+            console.print()
             
     for bowler_idx, bowler in enumerate(bowling_order):
         bowler_stats = bowling_stats[bowler.name]
@@ -390,54 +449,116 @@ def simulate_innings(batting_team, bowling_team, ball_by_ball=False, target=None
 
 
 def print_scorecard(team_name, batting_team, score, wickets, batting_stats, bowling_stats, fall):
-    print(f"\n===== {team_name} Scorecard =====")
-    print(f"{team_name}: {score}/{wickets}\n")
-
-    print("### Batting")
-    print(f"{'Player':20} {'R':>3} {'B':>3} {'4s':>3} {'6s':>3} {'SR':>6}   {'Dismissal'}")
-
+    console = Console()
+    
+    # Create panel with team score
+    score_text = Text()
+    score_text.append(f"{team_name}: ", style="bold white")
+    score_text.append(f"{score}/{wickets}", style="bold yellow")
+    score_text.append(f" ({len([s for s in batting_stats if s['balls'] > 0])} batsmen)", style="dim")
+    
+    console.print()
+    console.print(Panel(score_text, title=f"[bold cyan]⚡ {team_name} INNINGS[/bold cyan]", 
+                       border_style="cyan", box=box.DOUBLE))
+    
+    # Batting table
+    batting_table = Table(title="🏏 BATTING PERFORMANCE", show_header=True, 
+                         header_style="bold magenta", box=box.ROUNDED)
+    batting_table.add_column("#", style="dim", width=3)
+    batting_table.add_column("Player", style="cyan", width=25)
+    batting_table.add_column("R", justify="right", style="yellow")
+    batting_table.add_column("B", justify="right", style="white")
+    batting_table.add_column("4s", justify="right", style="blue")
+    batting_table.add_column("6s", justify="right", style="red")
+    batting_table.add_column("SR", justify="right", style="green")
+    batting_table.add_column("Dismissal", style="dim")
+    
     for i, s in enumerate(batting_stats):
         player_name = batting_team[i].name
         balls = s["balls"]
         sr = (s["runs"] / balls * 100) if balls > 0 else 0
-        print(
-            f"{i+1:<2}. {player_name:20} "
-            f"{s['runs']:>3} {balls:>3} {s['4s']:>3} {s['6s']:>3} "
-            f"{sr:>6.1f}   {s['dismissal']}"
+        
+        # Highlight top performers
+        runs_style = "bold yellow" if s["runs"] >= 50 else "yellow"
+        sr_style = "bold green" if sr >= 150 else "green"
+        
+        batting_table.add_row(
+            str(i+1),
+            player_name,
+            f"[{runs_style}]{s['runs']}[/{runs_style}]",
+            str(balls),
+            str(s['4s']),
+            str(s['6s']),
+            f"[{sr_style}]{sr:.1f}[/{sr_style}]",
+            s['dismissal']
         )
-
-    # -------------------------
-    # BOWLING TABLE
-    # -------------------------
-    print("\n### Bowling")
-    print(f"{'Bowler':20} {'O':>3} {'R':>3} {'W':>3} {'Econ':>6}")
-
+    
+    console.print(batting_table)
+    
+    # Bowling table
+    bowling_table = Table(title="⚾ BOWLING PERFORMANCE", show_header=True, 
+                         header_style="bold magenta", box=box.ROUNDED)
+    bowling_table.add_column("Bowler", style="cyan", width=25)
+    bowling_table.add_column("O", justify="right", style="white")
+    bowling_table.add_column("R", justify="right", style="yellow")
+    bowling_table.add_column("W", justify="right", style="red")
+    bowling_table.add_column("Econ", justify="right", style="green")
+    
     sorted_bowlers = sorted(
         [b for b in bowling_stats.items() if b[1]["balls"] > 0],
         key=lambda x: x[1]["overs"],
         reverse=True
     )
-
+    
     for bname, s in sorted_bowlers:
         overs = s["overs"]
         runs = s["runs"]
         wk = s["wickets"]
         econ = runs / overs if overs > 0 else 0
-        print(f"{bname:20} {overs:>3} {runs:>3} {wk:>3} {econ:>6.2f}")
-
-    print("\n### Fall of Wickets")
-    for i, (runs, wicket_num) in enumerate(fall, 1):
-        print(f"{i}. {runs}/{wicket_num}")
-
-    # print which team won by how much:
-    print("\n----------------------------------")
+        
+        # Highlight good bowling figures
+        wickets_style = "bold red" if wk >= 3 else "red"
+        econ_style = "bold green" if econ < 7.0 else "green" if econ < 9.0 else "yellow"
+        
+        bowling_table.add_row(
+            bname,
+            str(overs),
+            str(runs),
+            f"[{wickets_style}]{wk}[/{wickets_style}]",
+            f"[{econ_style}]{econ:.2f}[/{econ_style}]"
+        )
+    
+    console.print(bowling_table)
+    
+    # Fall of wickets
+    if fall:
+        fow_table = Table(title="📉 FALL OF WICKETS", show_header=False, 
+                         box=box.SIMPLE, show_edge=False)
+        fow_table.add_column("FOW", style="dim")
+        
+        fow_text = ", ".join([f"{runs}/{wicket_num}" for runs, wicket_num in fall])
+        fow_table.add_row(fow_text)
+        console.print(fow_table)
+    
+    console.print()
 
 
 def simulate_match(teamA_name, teamB_name, ball_by_ball=False):
-    # nicer centered header for the match
-    header = f" MATCH: {teamA_name} vs {teamB_name} "
-    line = "=" * max(0, (100 - len(header)) // 2)
-    print(f"{line}{header}{line}")
+    console = Console()
+    
+    # Rich match header
+    match_title = Text()
+    match_title.append("🏏 ", style="bold yellow")
+    match_title.append(teamA_name, style="bold cyan")
+    match_title.append(" vs ", style="bold white")
+    match_title.append(teamB_name, style="bold magenta")
+    match_title.append(" 🏏", style="bold yellow")
+    
+    console.print()
+    console.print(Panel(match_title, title="[bold green]⚡ T20 MATCH SIMULATION ⚡[/bold green]", 
+                       border_style="green", box=box.DOUBLE_EDGE, expand=False))
+    console.print()
+    
     teams = get_teams()
     if teamA_name not in teams or teamB_name not in teams:
         raise ValueError("Team names not found in teams.py")
@@ -500,15 +621,35 @@ def simulate_match(teamA_name, teamB_name, ball_by_ball=False):
                 projected_full = int(round(B_score + projected_additional))
                 display_B_score = projected_full
 
-        # concise match result lines
-        print("\nMatch Result Summary:")
-        print(f"{teamA_name}: {display_A_score}/{A_wk} (20.0)")
-        print(f"{teamB_name}: {display_B_score}/{B_wk} (20.0)")
-        # print winner and margin clearly
+        # Rich match result summary
+        console = Console()
+        
+        result_table = Table(title="📊 MATCH SUMMARY", show_header=True, 
+                           header_style="bold magenta", box=box.DOUBLE)
+        result_table.add_column("Team", style="cyan", width=20)
+        result_table.add_column("Score", justify="center", style="yellow")
+        result_table.add_column("Overs", justify="center", style="white")
+        
+        result_table.add_row(teamA_name, f"{display_A_score}/{A_wk}", "20.0")
+        result_table.add_row(teamB_name, f"{display_B_score}/{B_wk}", "20.0")
+        
+        console.print()
+        console.print(result_table)
+        
+        # Match result with winner highlighted
         if winner == "TIE":
-            print("Result: Match tied")
+            result_text = Text("🤝 MATCH TIED 🤝", style="bold yellow", justify="center")
         else:
-            print(f"Result: {winner} won by {margin}")
+            result_text = Text()
+            result_text.append("🏆 ", style="bold yellow")
+            result_text.append(winner, style="bold green")
+            result_text.append(" WON BY ", style="bold white")
+            result_text.append(margin.upper(), style="bold cyan")
+            result_text.append(" 🏆", style="bold yellow")
+        
+        console.print()
+        console.print(Panel(result_text, border_style="green", box=box.DOUBLE))
+        console.print()
 
         database.update_team_from_match(teamA_name, teamB_name, A_score, B_score, A_balls_faced, B_balls_faced, winner)
 
