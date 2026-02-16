@@ -19,8 +19,10 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+venv/
+env/
 
-# IDE
+# IDE & Editor
 .vscode/
 .idea/
 *.swp
@@ -28,12 +30,13 @@ wheels/
 *~
 .DS_Store
 
-# Database
-database/player_stats.json
-database/team_stats.json
-database/cumulative_stats.json
-database/match_stats/
+# Python version management
+.python-version
 
-# Temp files
+# Database files (generated/runtime)
+database/
+
+# Temporary files
 *.tmp
 tempCodeRunnerFile.py
+.env
