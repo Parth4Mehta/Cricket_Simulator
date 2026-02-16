@@ -1,0 +1,862 @@
+{
+    "most_runs": [
+        {
+            "name": "P. Nissanka",
+            "runs": 776,
+            "matches": 18
+        },
+        {
+            "name": "S. Hope",
+            "runs": 722,
+            "matches": 16
+        },
+        {
+            "name": "B. King",
+            "runs": 659,
+            "matches": 16
+        },
+        {
+            "name": "P. Salt",
+            "runs": 637,
+            "matches": 16
+        },
+        {
+            "name": "F. Allen",
+            "runs": 616,
+            "matches": 17
+        },
+        {
+            "name": "J. Buttler",
+            "runs": 585,
+            "matches": 16
+        },
+        {
+            "name": "K. Mendis",
+            "runs": 574,
+            "matches": 18
+        },
+        {
+            "name": "Y. Jaiswal",
+            "runs": 545,
+            "matches": 12
+        },
+        {
+            "name": "T. Head",
+            "runs": 545,
+            "matches": 11
+        },
+        {
+            "name": "J. Bairstow",
+            "runs": 540,
+            "matches": 16
+        }
+    ],
+    "most_wickets": [
+        {
+            "name": "J. Archer",
+            "wickets": 33,
+            "matches": 16
+        },
+        {
+            "name": "W. Hasaranga",
+            "wickets": 32,
+            "matches": 18
+        },
+        {
+            "name": "K. Rabada",
+            "wickets": 31,
+            "matches": 14
+        },
+        {
+            "name": "A. Hosein",
+            "wickets": 30,
+            "matches": 16
+        },
+        {
+            "name": "T. Boult",
+            "wickets": 28,
+            "matches": 17
+        },
+        {
+            "name": "M. Wood",
+            "wickets": 27,
+            "matches": 16
+        },
+        {
+            "name": "A. Rashid",
+            "wickets": 25,
+            "matches": 16
+        },
+        {
+            "name": "T. Southee",
+            "wickets": 25,
+            "matches": 17
+        },
+        {
+            "name": "N. Thushara",
+            "wickets": 24,
+            "matches": 18
+        },
+        {
+            "name": "J. Bumrah",
+            "wickets": 23,
+            "matches": 12
+        }
+    ],
+    "least_wickets": [
+        {
+            "name": "K. Kaleemullah",
+            "wickets": 3,
+            "matches": 8
+        },
+        {
+            "name": "C. Young",
+            "wickets": 3,
+            "matches": 8
+        },
+        {
+            "name": "C. Greaves",
+            "wickets": 4,
+            "matches": 8
+        },
+        {
+            "name": "G. Jha",
+            "wickets": 4,
+            "matches": 8
+        },
+        {
+            "name": "A. Bohara",
+            "wickets": 4,
+            "matches": 8
+        },
+        {
+            "name": "Z. Maqsood",
+            "wickets": 5,
+            "matches": 8
+        },
+        {
+            "name": "G. Delany",
+            "wickets": 5,
+            "matches": 8
+        },
+        {
+            "name": "DS. Airee",
+            "wickets": 5,
+            "matches": 8
+        },
+        {
+            "name": "K. KC",
+            "wickets": 5,
+            "matches": 8
+        },
+        {
+            "name": "A. Ahmed",
+            "wickets": 5,
+            "matches": 11
+        }
+    ],
+    "highest_score": [
+        {
+            "name": "L. Das",
+            "highest_score": 129,
+            "balls": 0
+        },
+        {
+            "name": "K. Bhurtel",
+            "highest_score": 119,
+            "balls": 0
+        },
+        {
+            "name": "N. Pooran",
+            "highest_score": 118,
+            "balls": 0
+        },
+        {
+            "name": "G. Munsey",
+            "highest_score": 114,
+            "balls": 0
+        },
+        {
+            "name": "T. Ura",
+            "highest_score": 113,
+            "balls": 0
+        },
+        {
+            "name": "K. Mendis",
+            "highest_score": 113,
+            "balls": 0
+        },
+        {
+            "name": "B. Azam",
+            "highest_score": 111,
+            "balls": 0
+        },
+        {
+            "name": "H. Klaasen",
+            "highest_score": 108,
+            "balls": 0
+        },
+        {
+            "name": "C. Anderson",
+            "highest_score": 107,
+            "balls": 0
+        },
+        {
+            "name": "A. Markram",
+            "highest_score": 106,
+            "balls": 0
+        }
+    ],
+    "most_fours": [
+        {
+            "name": "S. Hope",
+            "fours": 81
+        },
+        {
+            "name": "P. Nissanka",
+            "fours": 75
+        },
+        {
+            "name": "P. Salt",
+            "fours": 70
+        },
+        {
+            "name": "J. Bairstow",
+            "fours": 62
+        },
+        {
+            "name": "K. Mendis",
+            "fours": 62
+        },
+        {
+            "name": "B. King",
+            "fours": 61
+        },
+        {
+            "name": "J. Buttler",
+            "fours": 61
+        },
+        {
+            "name": "R. Sharma",
+            "fours": 57
+        },
+        {
+            "name": "Y. Jaiswal",
+            "fours": 57
+        },
+        {
+            "name": "F. Allen",
+            "fours": 57
+        }
+    ],
+    "most_sixes": [
+        {
+            "name": "P. Nissanka",
+            "sixes": 43
+        },
+        {
+            "name": "S. Hope",
+            "sixes": 32
+        },
+        {
+            "name": "F. Allen",
+            "sixes": 32
+        },
+        {
+            "name": "J. Buttler",
+            "sixes": 31
+        },
+        {
+            "name": "T. Head",
+            "sixes": 30
+        },
+        {
+            "name": "B. King",
+            "sixes": 29
+        },
+        {
+            "name": "P. Salt",
+            "sixes": 29
+        },
+        {
+            "name": "M. O'Dowd",
+            "sixes": 27
+        },
+        {
+            "name": "D. Conway",
+            "sixes": 27
+        },
+        {
+            "name": "K. Williamson",
+            "sixes": 27
+        }
+    ],
+    "highest_strike_rate": [
+        {
+            "name": "S. Rutherford",
+            "strike_rate": 228.92,
+            "runs": 190,
+            "balls_faced": 83
+        },
+        {
+            "name": "T. Nidamanuru",
+            "strike_rate": 207.81,
+            "runs": 133,
+            "balls_faced": 64
+        },
+        {
+            "name": "W. Jacks",
+            "strike_rate": 191.33,
+            "runs": 287,
+            "balls_faced": 150
+        },
+        {
+            "name": "A. Omarzai",
+            "strike_rate": 189.73,
+            "runs": 277,
+            "balls_faced": 146
+        },
+        {
+            "name": "C. Amini",
+            "strike_rate": 185.14,
+            "runs": 137,
+            "balls_faced": 74
+        },
+        {
+            "name": "C. Anderson",
+            "strike_rate": 183.5,
+            "runs": 189,
+            "balls_faced": 103
+        },
+        {
+            "name": "L. Tucker",
+            "strike_rate": 183.33,
+            "runs": 165,
+            "balls_faced": 90
+        },
+        {
+            "name": "I. Zadran",
+            "strike_rate": 182.7,
+            "runs": 338,
+            "balls_faced": 185
+        },
+        {
+            "name": "G. Phillips",
+            "strike_rate": 182.25,
+            "runs": 308,
+            "balls_faced": 169
+        },
+        {
+            "name": "K. Williamson",
+            "strike_rate": 181.88,
+            "runs": 522,
+            "balls_faced": 287
+        }
+    ],
+    "lowest_strike_rate": [
+        {
+            "name": "P. Singh",
+            "strike_rate": 108.89,
+            "runs": 147,
+            "balls_faced": 135
+        },
+        {
+            "name": "V. Singh",
+            "strike_rate": 117.22,
+            "runs": 211,
+            "balls_faced": 180
+        },
+        {
+            "name": "A. Jones",
+            "strike_rate": 120.12,
+            "runs": 203,
+            "balls_faced": 169
+        },
+        {
+            "name": "Z. Maqsood",
+            "strike_rate": 124.62,
+            "runs": 162,
+            "balls_faced": 130
+        },
+        {
+            "name": "M. Patel",
+            "strike_rate": 126.97,
+            "runs": 226,
+            "balls_faced": 178
+        },
+        {
+            "name": "L. Ferguson",
+            "strike_rate": 127.5,
+            "runs": 102,
+            "balls_faced": 80
+        },
+        {
+            "name": "G. Dockrell",
+            "strike_rate": 127.55,
+            "runs": 125,
+            "balls_faced": 98
+        },
+        {
+            "name": "DS. Airee",
+            "strike_rate": 127.61,
+            "runs": 171,
+            "balls_faced": 134
+        },
+        {
+            "name": "D. Bajwa",
+            "strike_rate": 129.1,
+            "runs": 173,
+            "balls_faced": 134
+        },
+        {
+            "name": "L. Das",
+            "strike_rate": 129.67,
+            "runs": 236,
+            "balls_faced": 182
+        }
+    ],
+    "best_bowling": [
+        {
+            "name": "B. Khan",
+            "wickets": 7,
+            "runs": 16
+        },
+        {
+            "name": "M. Starc",
+            "wickets": 6,
+            "runs": 22
+        },
+        {
+            "name": "W. Hasaranga",
+            "wickets": 6,
+            "runs": 33
+        },
+        {
+            "name": "P. Cummins",
+            "wickets": 5,
+            "runs": 11
+        },
+        {
+            "name": "K. Yadav",
+            "wickets": 5,
+            "runs": 13
+        },
+        {
+            "name": "S. Lamichhane",
+            "wickets": 5,
+            "runs": 19
+        },
+        {
+            "name": "S. Afridi",
+            "wickets": 5,
+            "runs": 28
+        },
+        {
+            "name": "K. Rabada",
+            "wickets": 5,
+            "runs": 36
+        },
+        {
+            "name": "A. Ramjani",
+            "wickets": 5,
+            "runs": 40
+        },
+        {
+            "name": "J. Archer",
+            "wickets": 5,
+            "runs": 41
+        }
+    ],
+    "best_economy": [
+        {
+            "name": "N. Shah",
+            "economy": 7.488,
+            "runs_conceded": 322,
+            "balls_bowled": 258
+        },
+        {
+            "name": "T. Sakib",
+            "economy": 7.677,
+            "runs_conceded": 238,
+            "balls_bowled": 186
+        },
+        {
+            "name": "A. Bohara",
+            "economy": 7.705,
+            "runs_conceded": 244,
+            "balls_bowled": 190
+        },
+        {
+            "name": "M. Amir",
+            "economy": 7.744,
+            "runs_conceded": 293,
+            "balls_bowled": 227
+        },
+        {
+            "name": "P. Cummins",
+            "economy": 7.878,
+            "runs_conceded": 323,
+            "balls_bowled": 246
+        },
+        {
+            "name": "S. Zafar",
+            "economy": 7.969,
+            "runs_conceded": 255,
+            "balls_bowled": 192
+        },
+        {
+            "name": "A. Singh",
+            "economy": 8.146,
+            "runs_conceded": 391,
+            "balls_bowled": 288
+        },
+        {
+            "name": "K. Rabada",
+            "economy": 8.179,
+            "runs_conceded": 458,
+            "balls_bowled": 336
+        },
+        {
+            "name": "C. Young",
+            "economy": 8.276,
+            "runs_conceded": 240,
+            "balls_bowled": 174
+        },
+        {
+            "name": "A. Mathews",
+            "economy": 8.319,
+            "runs_conceded": 599,
+            "balls_bowled": 432
+        }
+    ],
+    "worst_economy": [
+        {
+            "name": "G. Dockrell",
+            "economy": 11.326,
+            "runs_conceded": 336,
+            "balls_bowled": 178
+        },
+        {
+            "name": "M. Leask",
+            "economy": 10.71,
+            "runs_conceded": 332,
+            "balls_bowled": 186
+        },
+        {
+            "name": "G. Motie",
+            "economy": 10.441,
+            "runs_conceded": 616,
+            "balls_bowled": 354
+        },
+        {
+            "name": "L. van Beek",
+            "economy": 10.438,
+            "runs_conceded": 254,
+            "balls_bowled": 146
+        },
+        {
+            "name": "R. Khan",
+            "economy": 10.405,
+            "runs_conceded": 437,
+            "balls_bowled": 252
+        },
+        {
+            "name": "M. Adair",
+            "economy": 10.379,
+            "runs_conceded": 301,
+            "balls_bowled": 174
+        },
+        {
+            "name": "J. Frylinck",
+            "economy": 10.33,
+            "runs_conceded": 396,
+            "balls_bowled": 230
+        },
+        {
+            "name": "A. Zampa",
+            "economy": 10.327,
+            "runs_conceded": 432,
+            "balls_bowled": 251
+        },
+        {
+            "name": "M. Rahman",
+            "economy": 10.32,
+            "runs_conceded": 301,
+            "balls_bowled": 175
+        },
+        {
+            "name": "D. Heyliger",
+            "economy": 10.197,
+            "runs_conceded": 311,
+            "balls_bowled": 183
+        }
+    ],
+    "best_bowling_average": [
+        {
+            "name": "B. Khan",
+            "bowling_average": 14.27,
+            "wickets": 15,
+            "runs": 214
+        },
+        {
+            "name": "K. Rabada",
+            "bowling_average": 14.77,
+            "wickets": 31,
+            "runs": 458
+        },
+        {
+            "name": "J. Archer",
+            "bowling_average": 15.18,
+            "wickets": 33,
+            "runs": 501
+        },
+        {
+            "name": "S. Afridi",
+            "bowling_average": 16.3,
+            "wickets": 23,
+            "runs": 375
+        },
+        {
+            "name": "M. Wood",
+            "bowling_average": 17.85,
+            "wickets": 27,
+            "runs": 482
+        },
+        {
+            "name": "M. Starc",
+            "bowling_average": 17.89,
+            "wickets": 19,
+            "runs": 340
+        },
+        {
+            "name": "M. Amir",
+            "bowling_average": 18.31,
+            "wickets": 16,
+            "runs": 293
+        },
+        {
+            "name": "J. Bumrah",
+            "bowling_average": 18.83,
+            "wickets": 23,
+            "runs": 433
+        },
+        {
+            "name": "A. Ramjani",
+            "bowling_average": 19.26,
+            "wickets": 19,
+            "runs": 366
+        },
+        {
+            "name": "A. Hosein",
+            "bowling_average": 19.6,
+            "wickets": 30,
+            "runs": 588
+        }
+    ],
+    "worst_bowling_average": [
+        {
+            "name": "K. Kaleemullah",
+            "bowling_average": 82.67,
+            "wickets": 3,
+            "runs": 248
+        },
+        {
+            "name": "A. Ahmed",
+            "bowling_average": 80.2,
+            "wickets": 5,
+            "runs": 401
+        },
+        {
+            "name": "C. Young",
+            "bowling_average": 80.0,
+            "wickets": 3,
+            "runs": 240
+        },
+        {
+            "name": "C. Greaves",
+            "bowling_average": 78.75,
+            "wickets": 4,
+            "runs": 315
+        },
+        {
+            "name": "G. Jha",
+            "bowling_average": 75.5,
+            "wickets": 4,
+            "runs": 302
+        },
+        {
+            "name": "D. Heyliger",
+            "bowling_average": 62.2,
+            "wickets": 5,
+            "runs": 311
+        },
+        {
+            "name": "A. Bohara",
+            "bowling_average": 61.0,
+            "wickets": 4,
+            "runs": 244
+        },
+        {
+            "name": "K. KC",
+            "bowling_average": 60.2,
+            "wickets": 5,
+            "runs": 301
+        },
+        {
+            "name": "B. Masaba",
+            "bowling_average": 60.0,
+            "wickets": 7,
+            "runs": 420
+        },
+        {
+            "name": "Z. Maqsood",
+            "bowling_average": 60.0,
+            "wickets": 5,
+            "runs": 300
+        }
+    ],
+    "best_batting_average": [
+        {
+            "name": "A. Omarzai",
+            "batting_average": 69.25,
+            "runs": 277,
+            "outs": 4,
+            "not_outs": 7
+        },
+        {
+            "name": "T. Head",
+            "batting_average": 68.12,
+            "runs": 545,
+            "outs": 8,
+            "not_outs": 3
+        },
+        {
+            "name": "A. Vala",
+            "batting_average": 65.17,
+            "runs": 391,
+            "outs": 6,
+            "not_outs": 2
+        },
+        {
+            "name": "M. O'Dowd",
+            "batting_average": 59.57,
+            "runs": 417,
+            "outs": 7,
+            "not_outs": 1
+        },
+        {
+            "name": "V. Kohli",
+            "batting_average": 58.57,
+            "runs": 410,
+            "outs": 7,
+            "not_outs": 5
+        },
+        {
+            "name": "P. Athavale",
+            "batting_average": 55.0,
+            "runs": 330,
+            "outs": 6,
+            "not_outs": 2
+        },
+        {
+            "name": "N. Zadran",
+            "batting_average": 52.0,
+            "runs": 416,
+            "outs": 8,
+            "not_outs": 3
+        },
+        {
+            "name": "S. Hope",
+            "batting_average": 51.57,
+            "runs": 722,
+            "outs": 14,
+            "not_outs": 2
+        },
+        {
+            "name": "T. Ura",
+            "batting_average": 50.57,
+            "runs": 354,
+            "outs": 7,
+            "not_outs": 1
+        },
+        {
+            "name": "Y. Jaiswal",
+            "batting_average": 49.55,
+            "runs": 545,
+            "outs": 11,
+            "not_outs": 1
+        }
+    ],
+    "worst_batting_average": [
+        {
+            "name": "J. Smit",
+            "batting_average": 18.73,
+            "runs": 206,
+            "outs": 11,
+            "not_outs": 0
+        },
+        {
+            "name": "T. Stubbs",
+            "batting_average": 18.92,
+            "runs": 227,
+            "outs": 12,
+            "not_outs": 2
+        },
+        {
+            "name": "M. van Lingen",
+            "batting_average": 22.27,
+            "runs": 245,
+            "outs": 11,
+            "not_outs": 0
+        },
+        {
+            "name": "S. Ssesazi",
+            "batting_average": 24.64,
+            "runs": 271,
+            "outs": 11,
+            "not_outs": 0
+        },
+        {
+            "name": "KA. Mendis",
+            "batting_average": 24.88,
+            "runs": 398,
+            "outs": 16,
+            "not_outs": 2
+        },
+        {
+            "name": "R. Ravindra",
+            "batting_average": 25.0,
+            "runs": 375,
+            "outs": 15,
+            "not_outs": 2
+        },
+        {
+            "name": "N. Davin",
+            "batting_average": 25.2,
+            "runs": 252,
+            "outs": 10,
+            "not_outs": 1
+        },
+        {
+            "name": "S. Yadav",
+            "batting_average": 25.62,
+            "runs": 205,
+            "outs": 8,
+            "not_outs": 4
+        },
+        {
+            "name": "K. Janat",
+            "batting_average": 26.11,
+            "runs": 235,
+            "outs": 9,
+            "not_outs": 2
+        },
+        {
+            "name": "G. Erasmus",
+            "batting_average": 26.45,
+            "runs": 291,
+            "outs": 11,
+            "not_outs": 0
+        }
+    ]
+}

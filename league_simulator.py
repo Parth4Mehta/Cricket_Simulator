@@ -49,8 +49,11 @@ def select_teams():
     for idx, team in enumerate(all_teams, 1):
         print(f"{idx:2d}. {team}")
     
-    print("\nEnter team numbers (comma-separated) or 'all' for all teams:")
-    print("Example: 1,2,3,4,5,6 or all")
+    print("\nEnter team numbers using:")
+    print("  - Comma-separated: 1,2,3,4,5,6")
+    print("  - Range notation: 4-8 (includes both 4 and 8)")
+    print("  - Mixed: 1-3,5,7-9")
+    print("  - Or 'all' for all teams")
     
     choice = input("Your choice (default: all): ").strip().lower()
     
@@ -58,11 +61,46 @@ def select_teams():
         return all_teams
     
     try:
-        selections = [int(x.strip()) for x in choice.split(",")]
-        selected_teams = []
+        selections = []
+        
+        # Split by comma first
+        parts = choice.split(",")
+        
+        for part in parts:
+            part = part.strip()
+            
+            # Check if it's a range (contains hyphen)
+            if "-" in part:
+                range_parts = part.split("-")
+                if len(range_parts) == 2:
+                    start = int(range_parts[0].strip())
+                    end = int(range_parts[1].strip())
+                    
+                    if start > end:
+                        start, end = end, start
+                    
+                    # Add all numbers in range (inclusive)
+                    for num in range(start, end + 1):
+                        if 1 <= num <= len(all_teams):
+                            selections.append(num)
+                else:
+                    print(f"ERROR: Invalid range format '{part}'")
+                    return select_teams()
+            else:
+                # Single number
+                num = int(part)
+                if 1 <= num <= len(all_teams):
+                    selections.append(num)
+        
+        # Remove duplicates while preserving order
+        seen = set()
+        unique_selections = []
         for sel in selections:
-            if 1 <= sel <= len(all_teams):
-                selected_teams.append(all_teams[sel - 1])
+            if sel not in seen:
+                unique_selections.append(sel)
+                seen.add(sel)
+        
+        selected_teams = [all_teams[sel - 1] for sel in unique_selections]
         
         if len(selected_teams) < 2:
             print("ERROR: Need at least 2 teams!")

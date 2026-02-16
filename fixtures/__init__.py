@@ -4,6 +4,7 @@ Each module represents a different tournament structure (format).
 """
 
 from .double_round_robin_playoff import simulate_double_round_robin_playoff
+from .wc26_format import simulate_wc26_format
 
 # Available tournament formats
 TOURNAMENT_FORMATS = {
@@ -12,16 +13,16 @@ TOURNAMENT_FORMATS = {
         "description": "Each team plays every other team twice (home & away), followed by playoffs",
         "function": simulate_double_round_robin_playoff,
     },
-    # Future formats will be added here:
-    # "2": {
+    "2": {
+        "name": "World Cup '26 Format",
+        "description": "8 teams divided into 4 groups, Super 8 stage, then semis and final",
+        "function": simulate_wc26_format,
+    },
+    # Future format:
+    # "3": {
     #     "name": "Group Stage + Playoffs",
     #     "description": "Teams divided into groups, followed by cross-over playoffs",
     #     "function": simulate_group_stage_playoff,
-    # },
-    # "3": {
-    #     "name": "Single Elimination",
-    #     "description": "Direct knockout tournament - one loss and you're out",
-    #     "function": simulate_knockout,
     # },
 }
 
