@@ -285,11 +285,53 @@ def get_points_table_sorted():
 
 def clear_database():
     import shutil
+    import time
     
-    if os.path.exists(DB_DIR):
+    if not os.path.exists(DB_DIR):
+        ensure_dirs()
+        return
+    
+    try:
+        # Try standard removal first
         shutil.rmtree(DB_DIR)
-        print("Database cleared.")
+    except PermissionError:
+        # If permission error, try manual removal approach
+        try:
+            def handle_remove_error(func, path, exc):
+                """Handle removal errors, especially on Windows."""
+                import stat
+                if not os.access(path, os.W_OK):
+                    os.chmod(path, stat.S_IWUSR | stat.S_IREAD)
+                    func(path)
+                else:
+                    raise
+            
+            shutil.rmtree(DB_DIR, onerror=handle_remove_error)
+        except Exception as e:
+            # Last resort: remove files manually
+            try:
+                for root, dirs, files in os.walk(DB_DIR, topdown=False):
+                    for filename in files:
+                        filepath = os.path.join(root, filename)
+                        try:
+                            os.remove(filepath)
+                        except Exception:
+                            pass
+                    for dirname in dirs:
+                        dirpath = os.path.join(root, dirname)
+                        try:
+                            os.rmdir(dirpath)
+                        except Exception:
+                            pass
+                # Try to remove main directory
+                try:
+                    os.rmdir(DB_DIR)
+                except Exception:
+                    pass
+            except Exception as final_err:
+                print(f"Warning: Could not fully clear database ({final_err}). Clearing files instead...")
     
+    print("Database cleared.")
     ensure_dirs()
 
 

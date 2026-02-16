@@ -22,7 +22,7 @@ def print_banner():
 def show_main_menu():
     """Display the main menu and get user choice."""
     print("\n=== MAIN MENU ===")
-    print("1. Simulate a League (Double Round-Robin + Playoffs)")
+    print("1. Simulate a League (Choose Tournament Format)")
     print("2. Simulate a Single Match")
     print("3. View Current Stats")
     print("4. View Full Player Stats (Top Players)")

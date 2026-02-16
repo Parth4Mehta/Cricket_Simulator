@@ -1,11 +1,43 @@
-# league_simulator.py
+"""
+league_simulator.py
 
-from match_simulator import simulate_match
+Module to handle league simulation with different tournament formats.
+"""
+
 from teams import get_teams
 from database import clear_database
 import database
-import random
-from config_manager import reset_advanced_profile
+from fixtures import get_available_formats, get_format_function
+
+
+def select_tournament_format():
+    """
+    Allow user to select a tournament format.
+    
+    Returns:
+        format_id (str): The ID of selected format
+    """
+    formats = get_available_formats()
+    
+    print("\n" + "="*70)
+    print("SELECT TOURNAMENT FORMAT")
+    print("="*70)
+    
+    format_list = sorted(formats.items(), key=lambda x: x[0])
+    
+    for format_id, format_info in format_list:
+        print(f"\nOption {format_id}: {format_info['name']}")
+        print(f"  Description: {format_info['description']}")
+    
+    print("\n" + "-"*70)
+    while True:
+        choice = input("Select tournament format (enter option number): ").strip()
+        if choice in formats:
+            selected_format = formats[choice]
+            print(f"\n✓ Selected: {selected_format['name']}")
+            return choice
+        else:
+            print(f"Invalid choice! Please enter one of: {', '.join(sorted(formats.keys()))}")
 
 
 def select_teams():
@@ -43,24 +75,21 @@ def select_teams():
         return select_teams()
 
 
-def create_double_round_robin_fixtures(teams):
-    """Create double round-robin fixtures: each team plays every other team twice."""
-    fixtures = []
-    n = len(teams)
+def simulate_league(format_id=None, selected_teams=None):
+    """
+    Simulate a full league with the specified tournament format.
     
-    # Each team plays every other team twice (home and away)
-    for i in range(n):
-        for j in range(n):
-            if i != j:
-                fixtures.append((teams[i], teams[j]))
+    Args:
+        format_id (str, optional): Tournament format ID. If None, user will be prompted.
+        selected_teams (list, optional): Teams to participate. If None, user will select.
     
-    # Shuffle to randomize order
-    random.shuffle(fixtures)
-    return fixtures
-
-
-def simulate_league(selected_teams=None):
-    """Simulate a full league with double round-robin format."""
+    Returns:
+        champion (str): Name of the champion team
+    """
+    # Get tournament format from user if not provided
+    if format_id is None:
+        format_id = select_tournament_format()
+    
     # Select teams or use provided list
     if selected_teams is None:
         selected_teams = select_teams()
@@ -72,99 +101,11 @@ def simulate_league(selected_teams=None):
     playoff_ball_by_ball_choice = input("Do you want ball-by-ball simulation for playoff matches? (y/n, default: n): ").strip().lower()
     playoff_ball_by_ball = (playoff_ball_by_ball_choice == "y")
     
-    # Initialize points table
-    points_in_this_season = {t: 0 for t in selected_teams}
+    # Get the appropriate format function and run it
+    format_function = get_format_function(format_id)
+    champion = format_function(selected_teams, playoff_ball_by_ball)
     
-    # Create double round-robin fixtures
-    fixtures = create_double_round_robin_fixtures(selected_teams)
-    
-    print(f"\n{'='*60}")
-    print(f"League Format: Double Round-Robin ({len(selected_teams)} teams)")
-    print(f"Total Matches: {len(fixtures)}")
-    print(f"{'='*60}\n")
-
-    for idx, (A, B) in enumerate(fixtures, 1):
-        print(f"[Match {idx}/{len(fixtures)}] ", end="")
-        winner = simulate_match(A, B, False)
-        if winner != "TIE":
-            points_in_this_season[winner] = points_in_this_season.get(winner, 0) + 2
-        else:
-            points_in_this_season[A] = points_in_this_season.get(A, 0) + 1
-            points_in_this_season[B] = points_in_this_season.get(B, 0) + 1
-    
-    print("\n" + "="*60)
-    print("LEAGUE STAGE COMPLETED")
-    print("="*60)
-    
-    database.print_caps_and_table()
-    
-    # Simulate Playoffs - Top 4 teams
-    print("\n" + "="*60)
-    print("PLAYOFFS")
-    print("="*60)
-    
-    # Get standings sorted by points and NRR (already calculated in database)
-    table = database.get_points_table_sorted()
-    
-    # Filter to only selected teams
-    table_filtered = [row for row in table if row['team'] in selected_teams]
-    
-    if len(table_filtered) >= 4:
-        teams_for_playoffs = table_filtered[:4]
-    elif len(table_filtered) >= 2:
-        teams_for_playoffs = table_filtered[:3] if len(table_filtered) == 3 else table_filtered
-    else:
-        # Just 2 teams, go straight to final
-        return simulate_match(selected_teams[0], selected_teams[1], playoff_ball_by_ball)
-    
-    playoff_teams = [row['team'] for row in teams_for_playoffs]
-    
-    print(f"\nTop {len(playoff_teams)} teams qualified:")
-    for idx, row in enumerate(teams_for_playoffs, 1):
-        print(f"{idx}. {row['team']} ({row['points']} pts, NRR: {row['nrr']:+.2f})")
-    
-    if len(playoff_teams) == 2:
-        print("\n--- FINAL ---")
-        input("Press Enter to simulate the final...")
-        final_winner = simulate_match(playoff_teams[0], playoff_teams[1], playoff_ball_by_ball)
-    elif len(playoff_teams) == 3:
-        print("\n--- Eliminator ---")
-        input("Press Enter to simulate eliminator (2nd vs 3rd)...")
-        eliminator_winner = simulate_match(playoff_teams[1], playoff_teams[2], playoff_ball_by_ball)
-        
-        print("\n--- FINAL ---")
-        input("Press Enter to simulate the final...")
-        final_winner = simulate_match(playoff_teams[0], eliminator_winner, playoff_ball_by_ball)
-    else:  # 4 teams
-        print("\n--- Qualifier 1 (1st vs 2nd) ---")
-        input("Press Enter to simulate Qualifier 1...")
-        q1_winner = simulate_match(playoff_teams[0], playoff_teams[1], playoff_ball_by_ball)
-        q1_loser = playoff_teams[1] if q1_winner == playoff_teams[0] else playoff_teams[0]
-        
-        print("\n--- Eliminator (3rd vs 4th) ---")
-        input("Press Enter to simulate Eliminator...")
-        eliminator_winner = simulate_match(playoff_teams[2], playoff_teams[3], playoff_ball_by_ball)
-        
-        print("\n--- Qualifier 2 (Loser Q1 vs Winner Eliminator) ---")
-        input("Press Enter to simulate Qualifier 2...")
-        q2_winner = simulate_match(q1_loser, eliminator_winner, playoff_ball_by_ball)
-        
-        print("\n--- FINAL ---")
-        input("Press Enter to simulate the final...")
-        final_winner = simulate_match(q1_winner, q2_winner, playoff_ball_by_ball)
-    
-    print(f"\n{'='*60}")
-    print(f"🏆 LEAGUE CHAMPION: {final_winner} 🏆")
-    print(f"{'='*60}\n")
-    
-    # Reset advanced coefficients to balanced after league ends
-    try:
-        reset_advanced_profile()
-        print("✅ Game coefficients reset to Balanced defaults")
-    except Exception as e:
-        print(f"⚠️  Could not reset coefficients: {e}")
-    
-    return final_winner
+    return champion
 
 
 if __name__ == "__main__":
