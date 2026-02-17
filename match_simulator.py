@@ -356,17 +356,17 @@ def simulate_innings(batting_team, bowling_team, ball_by_ball=False, target=None
             bowler_stats["balls"] += 1
             balls_bowled += 1
 
-            p4 = FOUR_COEFF + striker.batting * BATSMAN_FOUR_BOOST
-            p6 = SIX_COEFF + striker.batting * BATSMAN_SIX_BOOST
+            p4 = FOUR_COEFF + striker.batting * BATSMAN_FOUR_BOOST - bowler.bowling * 0.0006
+            p6 = SIX_COEFF + striker.batting * BATSMAN_SIX_BOOST - bowler.bowling * 0.0003
             pw = WICKET_COEFF - striker.batting * 0.002 + bowler.bowling * BOWLER_WICKET_BOOST #0.002 is good
-            pdot = DOT_BALL_COEFF - striker.batting * 0.01
+            pdot = DOT_BALL_COEFF - striker.batting * 0.01 + bowler.bowling * 0.0008
 
             #Make last 4 overs more exciting - increase chances of boundaries and wickets
             if over_num >= total_overs - 4:
-                p4 += striker.batting * 0.009
-                p6 += striker.batting * 0.006
+                p4 += striker.batting * 0.009 - bowler.bowling * 0.0002
+                p6 += striker.batting * 0.006 - bowler.bowling * 0.0001
                 pw += bowler.bowling * 0.006
-                pdot -= 0.05
+                pdot -= 0.05 - bowler.bowling * 0.0002
             
             total = p4 + p6 + pw + pdot + 0.3
             p4 /= total
