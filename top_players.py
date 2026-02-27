@@ -136,7 +136,7 @@ def compute_categories(players, match_bowling_agg):
         for name, entry, _ in top_n_by_numeric(players, lambda e: e.get("sixes", 0), 10, True)
     ]
 
-    # Highest Strike Rate (runs/balls_faced * 100) - require runs >= 250
+    # Highest Strike Rate (runs/balls_faced * 100) - require runs >= 100
     def sr(e):
         runs = e.get("runs", 0)
         balls = e.get("balls_faced", 0)
@@ -149,7 +149,7 @@ def compute_categories(players, match_bowling_agg):
         for name, entry, val in top_n_by_numeric(players, sr, 10, True)
     ]
 
-    # Lowest Strike Rate - require runs >= 250
+    # Lowest Strike Rate - require runs >= 100
     results["lowest_strike_rate"] = [
         {"name": name, "strike_rate": round(val, 2), "runs": entry.get("runs", 0), "balls_faced": entry.get("balls_faced", 0)}
         for name, entry, val in top_n_by_numeric(players, sr, 10, False)
@@ -221,16 +221,15 @@ def compute_categories(players, match_bowling_agg):
         for name, info, _ in bowling_avg_worst
     ]
 
-    # Best Batting Average (min 300 runs) - runs / dismissals (outs)
+    # Best Batting Average (player must be in top 7 of his team's batting order) - runs / dismissals (outs)
     batting_avg_list = []
-    for player, stats in players.items():
-        runs = stats.get("runs", 0)
-        if runs < 200:  # Skip if less than 200 runs
+    for player, entry in players.items():
+        runs = entry.get("runs", 0)
+        outs = entry.get("outs", 0)
+        not_outs = entry.get("not_outs", 0)
+        batting_position = entry.get("batting_position", 0)
+        if batting_position > 7:
             continue
-        outs = stats.get("outs", 0)
-        not_outs = stats.get("not_outs", 0)
-        matches = stats.get("matches", 0)
-        
         # Batting average = runs / dismissals (only count players with at least 1 dismissal)
         if outs > 0:
             avg = runs / outs
@@ -243,7 +242,7 @@ def compute_categories(players, match_bowling_agg):
         for name, info, _ in batting_avg_sorted
     ]
 
-    # Worst Batting Average (min 300 runs) - lowest average
+    # Worst Batting Average (player must be in top 7 of his team's batting order) - lowest average
     batting_avg_worst = sorted(batting_avg_list, key=lambda t: t[2])[:10]
     results["worst_batting_average"] = [
         {"name": name, "batting_average": info["batting_average"], "runs": info["runs"], "outs": info["outs"], "not_outs": info["not_outs"]}
