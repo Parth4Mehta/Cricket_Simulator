@@ -620,6 +620,82 @@ def get_teams():
         ],
     }
 
+
+# Custom bowling orders for each team
+# Format: 20-character string where A=best bowler, B=2nd best, C=3rd, etc.
+# Bowlers are ranked by bowling skill (DESC), then alphabetically by name for ties.
+# Default pattern if not specified: "ABABCDECDECDECDEABAB" (uses top 5 bowlers)
+# Example: "ABCDABCDABCDABCDABCD" - rotates through top 4 bowlers evenly
+BOWLING_ORDERS = {
+    # IPL Teams
+    "MI": "ABABCDECDECDECDEABAB",
+    "CSK": "ABABCDECDECDECDEABAB",
+    "SRH": "ABABCDECDECDECDEABAB",
+    "RCB": "ABABCDECDECDECDEABAB",
+    "RR": "ABABCDECDECDECDEABAB",
+    "PBKS": "ABABCDECDECDECDEABAB",
+    "LSG": "ABABCDECDECDECDEABAB",
+    "KKR": "ABABCDECDECDECDEABAB",
+    "GT": "ABABCDECDECDECDEABAB",
+    "DC": "ABABCDECDECDECDEABAB",
+    # IPL 2016 Teams
+    "MI16": "ABABCDECDECDECDEABAB",
+    "RCB16": "ABABCDECDECDECDEABAB",
+    "SRH16": "ABABCDECDECDECDEABAB",
+    "KKR16": "ABABCDECDECDECDEABAB",
+    "DD16": "ABABCDECDECDECDEABAB",
+    "KXIP16": "ABABCDECDECDECDEABAB",
+    "GL16": "ABABCDECDECDECDEABAB",
+    "RPS16": "ABABCDECDECDECDEABAB",
+    # T20 World Cup Teams
+    "AFG": "ABABCDECDECDECDEABAB",
+    "AUS": "ABABCDECDECDECDEABAB",
+    "BAN": "ABABCDECDECDECDEABAB",
+    "CAN": "ABABCDECDECDECDEABAB",
+    "ENG": "ABABCDECDECDECDEABAB",
+    "IND": "ABABCDECDECDECDEABAB",
+    "IRE": "ABABCDECDECDECDEABAB",
+    "NAM": "ABABCDECDECDECDEABAB",
+    "NEP": "ABABCDECDECDECDEABAB",
+    "NED": "ABABCDECDECDECDEABAB",
+    "NZL": "ABABCDECDECDECDEABAB",
+    "OMN": "ABABCDECDECDECDEABAB",
+    "PAK": "ABABCDECDECDECDEABAB",
+    "PNG": "ABABCDECDECDECDEABAB",
+    "SCO": "ABABCDECDECDECDEABAB",
+    "RSA": "ABABCDECDECDECDEABAB",
+    "SRL": "ABABCDECDECDECDEABAB",
+    "UGA": "ABABCDECDECDECDEABAB",
+    "USA": "ABABCDECDECDECDEABAB",
+    "WI": "ABABCDECDECDECDEABAB",
+}
+
+
+def get_bowling_orders():
+    """Return the custom bowling orders dictionary."""
+    return BOWLING_ORDERS
+
+
+def get_bowling_order(team_name):
+    """Get the bowling order for a specific team, or None if not customized."""
+    return BOWLING_ORDERS.get(team_name)
+
+
+def get_bowler_ranking(team):
+    """
+    Rank bowlers by bowling skill (DESC), then alphabetically by name for ties.
+    Returns a dict mapping letter (A, B, C, ...) to Player object.
+    A = best bowler, B = 2nd best, etc.
+    """
+    # Sort by bowling skill DESC, then by name ASC for ties
+    sorted_bowlers = sorted(team, key=lambda p: (-p.bowling, p.name))
+    ranking = {}
+    for i, player in enumerate(sorted_bowlers):
+        letter = chr(ord('A') + i)
+        ranking[letter] = player
+    return ranking
+
+
 def calculate_team_strength(team):
     batting_strength = sum(sorted((player.batting for player in team), reverse=True)[:7])
     bowling_strength = sum(sorted((player.bowling for player in team), reverse=True)[:5])

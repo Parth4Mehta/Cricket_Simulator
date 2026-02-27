@@ -88,3 +88,9 @@ def reset_advanced_profile():
     
     save_config(config)
     return config.get("game_settings", {})
+
+
+def get_bowler_fatigue_settings():
+    """Get bowler fatigue settings from game_settings"""
+    settings = get_game_settings()
+    return settings.get("bowler_fatigue", {"up_value": 0.3, "fatigue_rate": 0.2})

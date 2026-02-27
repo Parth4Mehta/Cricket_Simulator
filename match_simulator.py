@@ -1,8 +1,8 @@
 import random
 import time
-from teams import get_teams
+from teams import get_teams, get_bowling_order, get_bowler_ranking
 import database
-from config_manager import get_profile, list_profiles, get_default_profile, update_advanced_profile, reset_advanced_profile
+from config_manager import get_profile, list_profiles, get_default_profile, update_advanced_profile, reset_advanced_profile, get_bowler_fatigue_settings
 from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel
@@ -206,15 +206,44 @@ def configure_ball_by_ball_timers():
 def choose_profile_default():
     """Automatically load default profile without prompting."""
     load_profile_default()
-def generate_bowling_order(best5):
-    A, B, C, D, E = best5
-    order = [A, B, A, B, C, D, E, C, D, E, C, D, E, C, D, E, A, B, A, B]
+def generate_bowling_order(bowling_team, custom_order=None):
+    """
+    Generate the bowling order for 20 overs.
+    
+    Args:
+        bowling_team: List of Player objects
+        custom_order: Optional 20-char string (A=best bowler, B=2nd best, etc.)
+                     If None, uses default pattern "ABABCDECDECDECDEABAB"
+    
+    Returns:
+        List of 20 Player objects representing bowler for each over
+    """
+    # Get bowler ranking: A=best, B=2nd best, etc.
+    # Sorted by bowling skill DESC, then alphabetically by name for ties
+    ranking = get_bowler_ranking(bowling_team)
+    
+    # Use custom order or default pattern
+    if custom_order and len(custom_order) == 20:
+        order_pattern = custom_order.upper()
+    else:
+        order_pattern = "ABABCDECDECDECDEABAB"  # Default: uses top 5 bowlers
+    
+    # Map pattern letters to players
+    order = []
+    for letter in order_pattern:
+        if letter in ranking:
+            order.append(ranking[letter])
+        else:
+            # Fallback to best bowler if letter not found
+            order.append(ranking['A'])
+    
     return order  # 20 overs
 
 
-def simulate_innings(batting_team, bowling_team, ball_by_ball=False, target=None, total_overs=20, team_name=None):
-    best5 = sorted(bowling_team, key=lambda p: p.bowling, reverse=True)[:5]
-    bowling_order = generate_bowling_order(best5)
+def simulate_innings(batting_team, bowling_team, ball_by_ball=False, target=None, total_overs=20, team_name=None, bowling_team_name=None):
+    # Get custom bowling order for the bowling team, if defined
+    custom_order = get_bowling_order(bowling_team_name) if bowling_team_name else None
+    bowling_order = generate_bowling_order(bowling_team, custom_order)
 
     score = 0
     wickets = 0
@@ -231,6 +260,11 @@ def simulate_innings(batting_team, bowling_team, ball_by_ball=False, target=None
 
     bowling_stats = {b.name: {"overs": 0, "balls": 0, "runs": 0, "wickets": 0}
                      for b in bowling_team}
+
+    # Load bowler fatigue settings
+    fatigue_settings = get_bowler_fatigue_settings()
+    BOWLER_UP_VALUE = fatigue_settings.get("up_value", 0.3)
+    BOWLER_FATIGUE_RATE = fatigue_settings.get("fatigue_rate", 0.2)
 
     fall_of_wickets = []
 
@@ -356,17 +390,22 @@ def simulate_innings(batting_team, bowling_team, ball_by_ball=False, target=None
             bowler_stats["balls"] += 1
             balls_bowled += 1
 
-            p4 = FOUR_COEFF + striker.batting * BATSMAN_FOUR_BOOST - bowler.bowling * 0.0006
-            p6 = SIX_COEFF + striker.batting * BATSMAN_SIX_BOOST - bowler.bowling * 0.0003
-            pw = WICKET_COEFF - striker.batting * 0.002 + bowler.bowling * BOWLER_WICKET_BOOST #0.002 is good
-            pdot = DOT_BALL_COEFF - striker.batting * 0.01 + bowler.bowling * 0.0008
+            # Calculate effective bowling strength with fatigue
+            # Formula: effective = base + up_value - (fatigue_rate * overs_bowled)
+            overs_bowled_by_bowler = bowler_stats["overs"]  # overs completed before this over
+            effective_bowling = bowler.bowling + BOWLER_UP_VALUE - (BOWLER_FATIGUE_RATE * overs_bowled_by_bowler)
+
+            p4 = FOUR_COEFF + striker.batting * BATSMAN_FOUR_BOOST - effective_bowling * 0.0006
+            p6 = SIX_COEFF + striker.batting * BATSMAN_SIX_BOOST - effective_bowling * 0.0003
+            pw = WICKET_COEFF - striker.batting * 0.002 + effective_bowling * BOWLER_WICKET_BOOST #0.002 is good
+            pdot = DOT_BALL_COEFF - striker.batting * 0.01 + effective_bowling * 0.0008
 
             #Make last 4 overs more exciting - increase chances of boundaries and wickets
             if over_num >= total_overs - 4:
-                p4 += striker.batting * 0.009 - bowler.bowling * 0.0002
-                p6 += striker.batting * 0.006 - bowler.bowling * 0.0001
-                pw += bowler.bowling * 0.006
-                pdot -= 0.05 - bowler.bowling * 0.0002
+                p4 += striker.batting * 0.009 - effective_bowling * 0.0002
+                p6 += striker.batting * 0.006 - effective_bowling * 0.0001
+                pw += effective_bowling * 0.006
+                pdot -= 0.05 - effective_bowling * 0.0002
             
             total = p4 + p6 + pw + pdot + 0.3
             p4 /= total
@@ -451,11 +490,15 @@ def simulate_innings(batting_team, bowling_team, ball_by_ball=False, target=None
 def print_scorecard(team_name, batting_team, score, wickets, batting_stats, bowling_stats, fall):
     console = Console()
     
+    # Calculate total overs from bowling stats
+    total_balls = sum(b["balls"] for b in bowling_stats.values())
+    total_overs = f"{total_balls // 6}.{total_balls % 6}"
+    
     # Create panel with team score
     score_text = Text()
     score_text.append(f"{team_name}: ", style="bold white")
     score_text.append(f"{score}/{wickets}", style="bold yellow")
-    score_text.append(f" ({len([s for s in batting_stats if s['balls'] > 0])} batsmen)", style="dim")
+    score_text.append(f" ({total_overs} overs)", style="dim")
     
     console.print()
     console.print(Panel(score_text, title=f"[bold cyan]⚡ {team_name} INNINGS[/bold cyan]", 
@@ -511,10 +554,12 @@ def print_scorecard(team_name, batting_team, score, wickets, batting_stats, bowl
     )
     
     for bname, s in sorted_bowlers:
-        overs = s["overs"]
+        balls = s["balls"]
+        overs_str = f"{balls // 6}.{balls % 6}"
         runs = s["runs"]
         wk = s["wickets"]
-        econ = runs / overs if overs > 0 else 0
+        overs_decimal = balls / 6  # Use actual balls for economy calculation
+        econ = runs / overs_decimal if balls > 0 else 0
         
         # Highlight good bowling figures
         wickets_style = "bold red" if wk >= 3 else "red"
@@ -522,7 +567,7 @@ def print_scorecard(team_name, batting_team, score, wickets, batting_stats, bowl
         
         bowling_table.add_row(
             bname,
-            str(overs),
+            overs_str,
             str(runs),
             f"[{wickets_style}]{wk}[/{wickets_style}]",
             f"[{econ_style}]{econ:.2f}[/{econ_style}]"
@@ -567,14 +612,14 @@ def simulate_match(teamA_name, teamB_name, ball_by_ball=False):
     B = teams[teamB_name]
 
     # First innings
-    A_score, A_wk, A_bat, A_bowl, A_fall = simulate_innings(A, B, ball_by_ball=ball_by_ball, team_name=teamA_name)
+    A_score, A_wk, A_bat, A_bowl, A_fall = simulate_innings(A, B, ball_by_ball=ball_by_ball, team_name=teamA_name, bowling_team_name=teamB_name)
     print_scorecard(teamA_name, A, A_score, A_wk, A_bat, A_bowl, A_fall)
 
     if ball_by_ball:
         time.sleep(INNINGS_TIMER)
     # Second innings (chase). target = A_score + 1
     target = A_score + 1
-    B_score, B_wk, B_bat, B_bowl, B_fall = simulate_innings(B, A, ball_by_ball=ball_by_ball, target=target, team_name=teamB_name)
+    B_score, B_wk, B_bat, B_bowl, B_fall = simulate_innings(B, A, ball_by_ball=ball_by_ball, target=target, team_name=teamB_name, bowling_team_name=teamA_name)
     print_scorecard(teamB_name, B, B_score, B_wk, B_bat, B_bowl, B_fall)
 
     if A_score > B_score:

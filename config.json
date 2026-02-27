@@ -54,6 +54,10 @@
       "six_boost": 0.006,
       "wicket_boost": 0.006,
       "dot_reduction": 0.05
+    },
+    "bowler_fatigue": {
+      "up_value": 0.3,
+      "fatigue_rate": 0.2
     }
   }
 }
