@@ -2,7 +2,7 @@ import random
 import time
 from teams import get_teams, get_bowling_order, get_bowler_ranking
 import database
-from config_manager import get_profile, list_profiles, get_default_profile, update_advanced_profile, reset_advanced_profile
+from config_manager import get_profile, list_profiles, get_default_profile, update_advanced_profile, reset_advanced_profile, get_bowler_fatigue_settings
 from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel
@@ -261,6 +261,11 @@ def simulate_innings(batting_team, bowling_team, ball_by_ball=False, target=None
     bowling_stats = {b.name: {"overs": 0, "balls": 0, "runs": 0, "wickets": 0}
                      for b in bowling_team}
 
+    # Load bowler fatigue settings
+    fatigue_settings = get_bowler_fatigue_settings()
+    BOWLER_UP_VALUE = fatigue_settings.get("up_value", 0.3)
+    BOWLER_FATIGUE_RATE = fatigue_settings.get("fatigue_rate", 0.2)
+
     fall_of_wickets = []
 
     balls_bowled = 0
@@ -385,17 +390,22 @@ def simulate_innings(batting_team, bowling_team, ball_by_ball=False, target=None
             bowler_stats["balls"] += 1
             balls_bowled += 1
 
-            p4 = FOUR_COEFF + striker.batting * BATSMAN_FOUR_BOOST - bowler.bowling * 0.0006
-            p6 = SIX_COEFF + striker.batting * BATSMAN_SIX_BOOST - bowler.bowling * 0.0003
-            pw = WICKET_COEFF - striker.batting * 0.002 + bowler.bowling * BOWLER_WICKET_BOOST #0.002 is good
-            pdot = DOT_BALL_COEFF - striker.batting * 0.01 + bowler.bowling * 0.0008
+            # Calculate effective bowling strength with fatigue
+            # Formula: effective = base + up_value - (fatigue_rate * overs_bowled)
+            overs_bowled_by_bowler = bowler_stats["overs"]  # overs completed before this over
+            effective_bowling = bowler.bowling + BOWLER_UP_VALUE - (BOWLER_FATIGUE_RATE * overs_bowled_by_bowler)
+
+            p4 = FOUR_COEFF + striker.batting * BATSMAN_FOUR_BOOST - effective_bowling * 0.0006
+            p6 = SIX_COEFF + striker.batting * BATSMAN_SIX_BOOST - effective_bowling * 0.0003
+            pw = WICKET_COEFF - striker.batting * 0.002 + effective_bowling * BOWLER_WICKET_BOOST #0.002 is good
+            pdot = DOT_BALL_COEFF - striker.batting * 0.01 + effective_bowling * 0.0008
 
             #Make last 4 overs more exciting - increase chances of boundaries and wickets
             if over_num >= total_overs - 4:
-                p4 += striker.batting * 0.009 - bowler.bowling * 0.0002
-                p6 += striker.batting * 0.006 - bowler.bowling * 0.0001
-                pw += bowler.bowling * 0.006
-                pdot -= 0.05 - bowler.bowling * 0.0002
+                p4 += striker.batting * 0.009 - effective_bowling * 0.0002
+                p6 += striker.batting * 0.006 - effective_bowling * 0.0001
+                pw += effective_bowling * 0.006
+                pdot -= 0.05 - effective_bowling * 0.0002
             
             total = p4 + p6 + pw + pdot + 0.3
             p4 /= total
