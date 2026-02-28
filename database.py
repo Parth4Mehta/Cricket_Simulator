@@ -261,6 +261,50 @@ def compute_nrr_for_team_entry(entry):
     return round(rs - rc, 3)
 
 
+def compute_nrr(runs_scored, runs_conceded, balls_faced, balls_bowled):
+    """
+    Compute NRR from raw stats.
+    
+    Args:
+        runs_scored: Total runs scored
+        runs_conceded: Total runs conceded
+        balls_faced: Total balls faced while batting
+        balls_bowled: Total balls bowled while bowling
+    
+    Returns:
+        Net Run Rate as float
+    """
+    if balls_faced == 0 or balls_bowled == 0:
+        return 0.0
+    rs = runs_scored / (balls_faced / 6.0)
+    rc = runs_conceded / (balls_bowled / 6.0)
+    return round(rs - rc, 3)
+
+
+def get_team_stats(team_name):
+    """
+    Get current statistics for a team from database.
+    
+    Returns dict with runs_scored, runs_conceded, balls_faced, balls_bowled
+    or a zero-initialized dict if team not found.
+    """
+    teams = load_teams()
+    if team_name in teams:
+        entry = teams[team_name]
+        return {
+            "runs_scored": entry.get("runs_scored", 0),
+            "runs_conceded": entry.get("runs_conceded", 0),
+            "balls_faced": entry.get("balls_faced", 0),
+            "balls_bowled": entry.get("balls_bowled", 0),
+        }
+    return {
+        "runs_scored": 0,
+        "runs_conceded": 0,
+        "balls_faced": 0,
+        "balls_bowled": 0,
+    }
+
+
 def get_points_table_sorted():
     teams = load_teams()
     table = []
