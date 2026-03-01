@@ -9,13 +9,15 @@ from teams import get_teams
 
 def calculate_team_strength(team_name):
     """
-    Calculate overall strength of a team based on player stats.
+    Calculate overall strength of a team based on:
+    - Best 7 batting scores
+    - Best 5 bowling scores
     
     Args:
         team_name (str): Name of the team
     
     Returns:
-        float: Team strength index (average combined batting + bowling)
+        float: Team strength index
     """
     teams = get_teams()
     
@@ -23,14 +25,23 @@ def calculate_team_strength(team_name):
         raise ValueError(f"Team {team_name} not found")
     
     players = teams[team_name]
-    total_strength = 0
     
-    for player in players:
-        # Combine batting and bowling score as team strength metric
-        player_strength = (player.batting + player.bowling) / 2
-        total_strength += player_strength
+    # Extract batting and bowling scores separately
+    batting_scores = [player.batting for player in players]
+    bowling_scores = [player.bowling for player in players]
     
-    return total_strength / len(players)
+    # Sort descending
+    batting_scores.sort(reverse=True)
+    bowling_scores.sort(reverse=True)
+    
+    # Take best 7 batsmen and best 5 bowlers
+    top_7_batting = sum(batting_scores[:7])
+    top_5_bowling = sum(bowling_scores[:5])
+    
+    # Final strength metric
+    team_strength = top_7_batting + top_5_bowling
+    
+    return team_strength
 
 
 def get_all_team_strengths():
