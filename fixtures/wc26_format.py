@@ -45,8 +45,42 @@ def get_team_nrr(team_name):
     return 0.0
 
 
-def print_group_table(group_name, standings):
-    """Print a nicely formatted group standings table."""
+def get_stage_nrr(team_name, snapshot):
+    """
+    Calculate NRR for a team since a snapshot point.
+    
+    This computes NRR only from matches played after the snapshot,
+    useful for stage-specific NRR (e.g., Super Eight only).
+    
+    Args:
+        team_name: Name of the team
+        snapshot: Dict mapping team names to their stats at snapshot time
+    
+    Returns:
+        NRR computed from matches since snapshot
+    """
+    current = database.get_team_stats(team_name)
+    snap = snapshot.get(team_name, {"runs_scored": 0, "runs_conceded": 0, "balls_faced": 0, "balls_bowled": 0})
+    
+    # Calculate delta (stats since snapshot)
+    runs_scored = current["runs_scored"] - snap.get("runs_scored", 0)
+    runs_conceded = current["runs_conceded"] - snap.get("runs_conceded", 0)
+    balls_faced = current["balls_faced"] - snap.get("balls_faced", 0)
+    balls_bowled = current["balls_bowled"] - snap.get("balls_bowled", 0)
+    
+    return database.compute_nrr(runs_scored, runs_conceded, balls_faced, balls_bowled)
+
+
+def print_group_table(group_name, standings, nrr_override=None):
+    """
+    Print a nicely formatted group standings table.
+    
+    Args:
+        group_name: Name of the group
+        standings: List of (team, stats) tuples
+        nrr_override: Optional dict mapping team names to NRR values.
+                      If provided, uses these instead of database NRR.
+    """
     print(f"\n{'='*70}")
     print(f"GROUP {group_name} STANDINGS")
     print(f"{'='*70}")
@@ -54,8 +88,11 @@ def print_group_table(group_name, standings):
     print("-" * 70)
     
     for idx, (team, stats) in enumerate(standings, 1):
-        # Get actual NRR from database for accurate calculation
-        nrr = get_team_nrr(team)
+        # Use override NRR if provided, otherwise get from database
+        if nrr_override is not None and team in nrr_override:
+            nrr = nrr_override[team]
+        else:
+            nrr = get_team_nrr(team)
         print(f"{idx:<4} {team:<8} {stats['points']:<6} {stats['wins']:<3} {stats['losses']:<3} {stats['ties']:<3} {nrr:>7.3f}")
     
     print("=" * 70)
@@ -189,6 +226,10 @@ def simulate_wc26_format(selected_teams, playoff_ball_by_ball=False):
     print(f"\nGroup P: {', '.join(group_p_teams)}")
     print(f"Group Q: {', '.join(group_q_teams)}")
     
+    # Snapshot team stats before Super 8 starts (for stage-specific NRR calculation)
+    super8_all_teams = group_p_teams + group_q_teams
+    super8_stats_snapshot = {team: database.get_team_stats(team) for team in super8_all_teams}
+    
     # Wait before starting Super 8
     input("\nPress Enter to start SUPER 8 GROUP P matches...")
     
@@ -235,13 +276,17 @@ def simulate_wc26_format(selected_teams, playoff_ball_by_ball=False):
         print(f"SUPER 8 GROUP {super8_group_name} MATCHES COMPLETED")
         print("="*70)
         
-        # Sort by points and NRR (from database)
+        # Compute stage-specific NRR for each team in this Super 8 group
+        super8_nrr = {team: get_stage_nrr(team, super8_stats_snapshot) 
+                      for team in super8_groups[super8_group_name]['teams']}
+        
+        # Sort by points and Super 8-specific NRR (not overall tournament NRR)
         standings = sorted(
             super8_groups[super8_group_name]['standings'].items(),
-            key=lambda x: (-x[1]['points'], -get_team_nrr(x[0]))
+            key=lambda x: (-x[1]['points'], -super8_nrr[x[0]])
         )
         
-        print_group_table(super8_group_name, standings)
+        print_group_table(super8_group_name, standings, nrr_override=super8_nrr)
         
         # Get top 2 teams
         qualified_from_super8 = [standings[0][0], standings[1][0]]
@@ -261,10 +306,14 @@ def simulate_wc26_format(selected_teams, playoff_ball_by_ball=False):
     super8_qualified = {}
     
     for super8_group_name in ['P', 'Q']:
-        # Sort by points and NRR
+        # Compute stage-specific NRR for sorting
+        super8_nrr = {team: get_stage_nrr(team, super8_stats_snapshot) 
+                      for team in super8_groups[super8_group_name]['teams']}
+        
+        # Sort by points and Super 8-specific NRR
         standings = sorted(
             super8_groups[super8_group_name]['standings'].items(),
-            key=lambda x: (-x[1]['points'], -get_team_nrr(x[0]))
+            key=lambda x: (-x[1]['points'], -super8_nrr[x[0]])
         )
         
         # Get top 2 teams
