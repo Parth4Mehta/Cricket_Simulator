@@ -4,6 +4,8 @@ teams_helper.py
 Helper functions for team operations like strength calculation and grouping.
 """
 
+import random
+
 from teams import get_teams
 
 
@@ -81,7 +83,15 @@ def divide_teams_into_balanced_groups(teams_list, num_groups=4):
     
     # Sort teams by strength (descending)
     sorted_teams = sorted(teams_list, key=lambda t: -team_strengths[t])
-    
+
+    # Imperfect sorting: adjacent teams may swap with probability p
+    # p=0.2 keeps rankings mostly intact while adding enough variance
+    # so groups differ across runs even when strengths don't change
+    swap_probability = 0.2
+    for i in range(len(sorted_teams) - 1):
+        if random.random() < swap_probability:
+            sorted_teams[i], sorted_teams[i + 1] = sorted_teams[i + 1], sorted_teams[i]
+
     # Initialize groups
     groups = [[] for _ in range(num_groups)]
     
