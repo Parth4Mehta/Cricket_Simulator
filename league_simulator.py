@@ -132,16 +132,20 @@ def simulate_league(format_id=None, selected_teams=None):
     if selected_teams is None:
         selected_teams = select_teams()
     
-    # Ask user if they want ball-by-ball for playoffs
+    # Ask user if they want ball-by-ball for league matches
     print("\n" + "="*60)
-    print("Playoff Configuration")
+    print("Simulation Configuration")
     print("="*60)
+    league_ball_by_ball_choice = input("Do you want ball-by-ball simulation for league matches? (y/n, default: n): ").strip().lower()
+    league_ball_by_ball = (league_ball_by_ball_choice == "y")
+    
+    # Ask user if they want ball-by-ball for playoffs
     playoff_ball_by_ball_choice = input("Do you want ball-by-ball simulation for playoff matches? (y/n, default: n): ").strip().lower()
     playoff_ball_by_ball = (playoff_ball_by_ball_choice == "y")
     
     # Get the appropriate format function and run it
     format_function = get_format_function(format_id)
-    champion = format_function(selected_teams, playoff_ball_by_ball)
+    champion = format_function(selected_teams, playoff_ball_by_ball, league_ball_by_ball)
     
     return champion
 

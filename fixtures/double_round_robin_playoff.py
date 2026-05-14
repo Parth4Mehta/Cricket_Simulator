@@ -27,13 +27,14 @@ def create_double_round_robin_fixtures(teams):
     return fixtures
 
 
-def simulate_double_round_robin_playoff(selected_teams, playoff_ball_by_ball=False):
+def simulate_double_round_robin_playoff(selected_teams, playoff_ball_by_ball=False, league_ball_by_ball=False):
     """
     Simulate a league with double round-robin format + playoffs.
     
     Args:
         selected_teams: List of teams participating
         playoff_ball_by_ball: Whether to show ball-by-ball for playoff matches
+        league_ball_by_ball: Whether to show ball-by-ball for league matches (with zero timers)
     
     Returns:
         Champion team name
@@ -52,8 +53,8 @@ def simulate_double_round_robin_playoff(selected_teams, playoff_ball_by_ball=Fal
 
     # Play league stage matches
     for idx, (A, B) in enumerate(fixtures, 1):
-        print(f"[Match {idx}/{len(fixtures)}] ", end="")
-        winner = simulate_match(A, B, False)
+        print(f"[Match {idx}/{len(fixtures)}] ", end="" if not league_ball_by_ball else "\n")
+        winner = simulate_match(A, B, league_ball_by_ball, ball_timer=0, innings_timer=0)
         if winner != "TIE":
             points_in_this_season[winner] = points_in_this_season.get(winner, 0) + 2
         else:

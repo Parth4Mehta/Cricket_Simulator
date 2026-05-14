@@ -325,7 +325,7 @@ def generate_bowling_order(bowling_team, custom_order=None):
     return order  # 20 overs
 
 
-def simulate_innings(batting_team, bowling_team, ball_by_ball=False, target=None, total_overs=20, team_name=None, bowling_team_name=None):
+def simulate_innings(batting_team, bowling_team, ball_by_ball=False, target=None, total_overs=20, team_name=None, bowling_team_name=None, ball_timer=None, innings_timer=None):
     # Get custom bowling order for the bowling team, if defined
     custom_order = get_bowling_order(bowling_team_name) if bowling_team_name else None
     bowling_order = generate_bowling_order(bowling_team, custom_order)
@@ -555,7 +555,7 @@ def simulate_innings(batting_team, bowling_team, ball_by_ball=False, target=None
                     per_over_tokens.append('W')
                 # overwrite same line for current over
                 print(f"Over {over_num+1}: {' '.join(per_over_tokens)}", end='\r', flush=True)
-                time.sleep(BALL_TIMER)
+                time.sleep(ball_timer if ball_timer is not None else BALL_TIMER)
             # if chasing and reached target, end innings immediately
             if target is not None and score >= target:
                 # ensure final over line printed properly
@@ -673,7 +673,7 @@ def print_scorecard(team_name, batting_team, score, wickets, batting_stats, bowl
     console.print()
 
 
-def simulate_match(teamA_name, teamB_name, ball_by_ball=False):
+def simulate_match(teamA_name, teamB_name, ball_by_ball=False, ball_timer=None, innings_timer=None):
     console = Console()
     
     # Rich match header
@@ -704,12 +704,14 @@ def simulate_match(teamA_name, teamB_name, ball_by_ball=False):
         batting_first_team, bowling_first_team, 
         ball_by_ball=ball_by_ball, 
         team_name=batting_first_name, 
-        bowling_team_name=bowling_first_name
+        bowling_team_name=bowling_first_name,
+        ball_timer=ball_timer,
+        innings_timer=innings_timer
     )
     print_scorecard(batting_first_name, batting_first_team, first_score, first_wk, first_bat, first_bowl, first_fall)
 
     if ball_by_ball:
-        time.sleep(INNINGS_TIMER)
+        time.sleep(innings_timer if innings_timer is not None else INNINGS_TIMER)
     
     # Second innings (chase). target = first_score + 1
     target = first_score + 1
@@ -718,7 +720,9 @@ def simulate_match(teamA_name, teamB_name, ball_by_ball=False):
         ball_by_ball=ball_by_ball, 
         target=target, 
         team_name=bowling_first_name, 
-        bowling_team_name=batting_first_name
+        bowling_team_name=batting_first_name,
+        ball_timer=ball_timer,
+        innings_timer=innings_timer
     )
     print_scorecard(bowling_first_name, bowling_first_team, second_score, second_wk, second_bat, second_bowl, second_fall)
 
