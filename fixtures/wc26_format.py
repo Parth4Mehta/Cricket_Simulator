@@ -337,11 +337,11 @@ def simulate_wc26_format(selected_teams, playoff_ball_by_ball=False, league_ball
     
     print(f"\nSemi-Final 1: {p1} (P1) vs {q2} (Q2)")
     input("Press Enter to simulate Semi-Final 1...")
-    semi1_winner = simulate_match(p1, q2, playoff_ball_by_ball)
+    semi1_winner = simulate_match(p1, q2, playoff_ball_by_ball, stage="playoff")
     
     print(f"\nSemi-Final 2: {q1} (Q1) vs {p2} (P2)")
     input("Press Enter to simulate Semi-Final 2...")
-    semi2_winner = simulate_match(q1, p2, playoff_ball_by_ball)
+    semi2_winner = simulate_match(q1, p2, playoff_ball_by_ball, stage="playoff")
     
     # ========== FINAL ==========
     print("\n" + "=" * 70)
@@ -350,7 +350,7 @@ def simulate_wc26_format(selected_teams, playoff_ball_by_ball=False, league_ball
     
     print(f"\n{semi1_winner} vs {semi2_winner}")
     input("Press Enter to simulate the Final...")
-    champion = simulate_match(semi1_winner, semi2_winner, playoff_ball_by_ball)
+    champion = simulate_match(semi1_winner, semi2_winner, playoff_ball_by_ball, stage="playoff")
     
     # ========== RESULTS ==========
     print(f"\n{'='*70}")

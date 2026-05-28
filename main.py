@@ -24,15 +24,16 @@ def show_main_menu():
     print("\n=== MAIN MENU ===")
     print("1. Simulate a League (Choose Tournament Format)")
     print("2. Simulate a Single Match")
-    print("3. View Current Stats")
-    print("4. View Full Player Stats (Top Players)")
+    print("3. View Stats (Current or Historical)")
+    print("4. View Full Player Stats (Top Players, Current or Historical)")
     print("5. Clear Database & Start Fresh")
     print("6. Configure Game Difficulty")
     print("7. Configure Ball-by-Ball Timers")
-    print("8. Exit")
+    print("8. Lookup Player by Name")
+    print("9. Exit")
     print()
-    
-    choice = input("Select an option (1-8): ").strip()
+
+    choice = input("Select an option (1-9): ").strip()
     return choice
 
 
@@ -92,37 +93,187 @@ def menu_simulate_match():
         print(f"Error during match simulation: {e}")
 
 
+def _prompt_current_or_historical():
+    """Ask the user which data source they want to view.
+
+    Returns one of: 'current', 'hist_all', 'hist_season', or None if cancelled.
+    For 'hist_season', also returns the chosen season_id.
+    """
+    print()
+    print("View which data?")
+    print("  1. Current season (working state)")
+    print("  2. Historical: all-time aggregate (across all archived seasons)")
+    print("  3. Historical: a specific archived season")
+    choice = input("Select (1-3): ").strip()
+    if choice == "1":
+        return ("current", None)
+    if choice == "2":
+        return ("hist_all", None)
+    if choice == "3":
+        import historical
+        seasons = historical.list_seasons()
+        if not seasons:
+            print("\nNo archived seasons yet. Falling back to current season.")
+            return ("current", None)
+        historical.print_seasons_list()
+        sid = input("Enter season_id: ").strip()
+        try:
+            sid = int(sid)
+        except ValueError:
+            print("Invalid season_id.")
+            return None
+        if not any(s["season_id"] == sid for s in seasons):
+            print(f"season_id {sid} not found.")
+            return None
+        return ("hist_season", sid)
+    print("Invalid choice.")
+    return None
+
+
 def menu_view_stats():
-    """View current statistics."""
-    print("\n" + "="*70)
-    print("CURRENT STATISTICS")
-    print("="*70)
-    
+    """View statistics — current or historical (points table + orange/purple cap)."""
+    print("\n" + "=" * 70)
+    print("STATISTICS")
+    print("=" * 70)
+    selection = _prompt_current_or_historical()
+    if selection is None:
+        return
+    mode, season_id = selection
+
     try:
-        print_caps_and_table()
+        if mode == "current":
+            print_caps_and_table()
+        elif mode == "hist_all":
+            import historical
+            historical.print_historical_points_table_all_time()
+            _print_historical_caps(historical, season_id=None)
+        elif mode == "hist_season":
+            import historical
+            historical.print_historical_points_table_season(season_id)
+            _print_historical_caps(historical, season_id=season_id)
     except Exception as e:
         print(f"Error displaying stats: {e}")
 
 
+def _print_historical_caps(historical, season_id):
+    """Render orange/purple cap from historical data (uses the existing
+    rendering helpers in database.py for consistency)."""
+    from rich.console import Console
+    from rich.table import Table
+    from rich import box
+
+    runs_sorted, wkts_sorted = historical.get_historical_orange_purple(10, season_id=season_id)
+    console = Console()
+    label = "ALL-TIME" if season_id is None else f"SEASON {season_id}"
+
+    orange_table = Table(title=f"🧡 ORANGE CAP ({label})", box=box.DOUBLE, style="bold orange1")
+    orange_table.add_column("#", justify="right", style="yellow")
+    orange_table.add_column("Player", style="cyan")
+    orange_table.add_column("Runs", justify="right", style="bold green")
+    for idx, (name, data) in enumerate(runs_sorted, 1):
+        orange_table.add_row(str(idx), name, str(data.get("runs", 0)))
+    console.print()
+    console.print(orange_table)
+
+    purple_table = Table(title=f"💜 PURPLE CAP ({label})", box=box.DOUBLE, style="bold magenta")
+    purple_table.add_column("#", justify="right", style="yellow")
+    purple_table.add_column("Player", style="cyan")
+    purple_table.add_column("Wickets", justify="right", style="bold red")
+    for idx, (name, data) in enumerate(wkts_sorted, 1):
+        purple_table.add_row(str(idx), name, str(data.get("wickets", 0)))
+    console.print(purple_table)
+    console.print()
+
+
 def menu_view_full_stats():
-    """View full player statistics (top players across all categories)."""
-    print("\n" + "="*70)
+    """View full player statistics across 15 categories — current or historical."""
+    print("\n" + "=" * 70)
     print("FULL PLAYER STATISTICS")
-    print("="*70)
-    print("\nFetching and displaying comprehensive player statistics...")
-    print("(Running top_players analysis)\n")
-    
+    print("=" * 70)
+    selection = _prompt_current_or_historical()
+    if selection is None:
+        return
+    mode, season_id = selection
+
     try:
-        # Import and run top_players main function
-        from top_players import main as top_players_main
-        sys.argv = [sys.argv[0], "--print"]  # Set args to print output
-        top_players_main()
+        if mode == "current":
+            from top_players import main as top_players_main
+            sys.argv = [sys.argv[0], "--print"]
+            top_players_main()
+        else:
+            import historical
+            results = historical.get_historical_top_players(
+                season_id=None if mode == "hist_all" else season_id
+            )
+            # Reuse the existing display path in top_players.py by injecting results.
+            _render_top_players_results(results, season_id=season_id)
     except KeyboardInterrupt:
         print("\n\nFull stats display cancelled.")
     except Exception as e:
         print(f"Error displaying full stats: {e}")
         import traceback
         traceback.print_exc()
+
+
+def _render_top_players_results(results, season_id):
+    """Render the 15-category results dict using the same table layouts
+    as top_players.main(). Lifted into main.py so that historical results
+    can be displayed without re-running the SQL-based loader.
+    """
+    from rich.console import Console
+    from rich.table import Table
+    from rich.panel import Panel
+    console = Console()
+    label = "ALL-TIME" if season_id is None else f"SEASON {season_id}"
+
+    for cat, items in results.items():
+        title = f"{cat.upper().replace('_', ' ')}  ({label})"
+        if not items:
+            console.print(Panel(f"[yellow]No data for {title}[/yellow]"))
+            console.print()
+            continue
+        sample = items[0]
+        # Build a generic table from the keys present in the first item.
+        table = Table(title=title, show_header=True, header_style="bold magenta")
+        table.add_column("Rank", style="cyan", width=6)
+        cols = [k for k in sample.keys() if k != "name"]
+        table.add_column("Player", style="green", width=30)
+        for c in cols:
+            table.add_column(c.replace("_", " ").title(), justify="right")
+        for i, it in enumerate(items, 1):
+            row = [str(i), it.get("name", "Unknown")]
+            for c in cols:
+                v = it.get(c)
+                row.append("-" if v is None else str(v))
+            table.add_row(*row)
+        console.print(table)
+        console.print()
+
+
+def menu_lookup_player():
+    """Look up a single player's full batting + bowling card."""
+    print("\n" + "=" * 70)
+    print("PLAYER LOOKUP")
+    print("=" * 70)
+    name = input("\nPlayer name (exact, case-sensitive): ").strip()
+    if not name:
+        print("No name entered.")
+        return
+
+    selection = _prompt_current_or_historical()
+    if selection is None:
+        return
+    mode, season_id = selection
+
+    import historical
+    if mode == "current":
+        card = historical.get_player_card_current(name)
+    elif mode == "hist_all":
+        card = historical.get_player_card_historical(name, season_id=None)
+    else:
+        card = historical.get_player_card_historical(name, season_id=season_id)
+
+    historical.print_player_card(card)
 
 
 def menu_clear_database():
@@ -181,10 +332,12 @@ def main():
             elif choice == "7":
                 menu_configure_timers()
             elif choice == "8":
+                menu_lookup_player()
+            elif choice == "9":
                 print("\nThanks for using CricSim! Goodbye!\n")
                 sys.exit(0)
             else:
-                print("Invalid choice! Please select 1-8.")
+                print("Invalid choice! Please select 1-9.")
         
         except KeyboardInterrupt:
             print("\n\nInterrupted by user.")

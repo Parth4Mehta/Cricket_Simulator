@@ -95,32 +95,32 @@ def simulate_double_round_robin_playoff(selected_teams, playoff_ball_by_ball=Fal
     if len(playoff_teams) == 2:
         print("\n--- FINAL ---")
         input("Press Enter to simulate the final...")
-        final_winner = simulate_match(playoff_teams[0], playoff_teams[1], playoff_ball_by_ball)
+        final_winner = simulate_match(playoff_teams[0], playoff_teams[1], playoff_ball_by_ball, stage="playoff")
     elif len(playoff_teams) == 3:
         print("\n--- Eliminator ---")
         input("Press Enter to simulate eliminator (2nd vs 3rd)...")
-        eliminator_winner = simulate_match(playoff_teams[1], playoff_teams[2], playoff_ball_by_ball)
+        eliminator_winner = simulate_match(playoff_teams[1], playoff_teams[2], playoff_ball_by_ball, stage="playoff")
         
         print("\n--- FINAL ---")
         input("Press Enter to simulate the final...")
-        final_winner = simulate_match(playoff_teams[0], eliminator_winner, playoff_ball_by_ball)
+        final_winner = simulate_match(playoff_teams[0], eliminator_winner, playoff_ball_by_ball, stage="playoff")
     else:  # 4 teams
         print("\n--- Qualifier 1 (1st vs 2nd) ---")
         input("Press Enter to simulate Qualifier 1...")
-        q1_winner = simulate_match(playoff_teams[0], playoff_teams[1], playoff_ball_by_ball)
+        q1_winner = simulate_match(playoff_teams[0], playoff_teams[1], playoff_ball_by_ball, stage="playoff")
         q1_loser = playoff_teams[1] if q1_winner == playoff_teams[0] else playoff_teams[0]
         
         print("\n--- Eliminator (3rd vs 4th) ---")
         input("Press Enter to simulate Eliminator...")
-        eliminator_winner = simulate_match(playoff_teams[2], playoff_teams[3], playoff_ball_by_ball)
+        eliminator_winner = simulate_match(playoff_teams[2], playoff_teams[3], playoff_ball_by_ball, stage="playoff")
         
         print("\n--- Qualifier 2 (Loser Q1 vs Winner Eliminator) ---")
         input("Press Enter to simulate Qualifier 2...")
-        q2_winner = simulate_match(q1_loser, eliminator_winner, playoff_ball_by_ball)
+        q2_winner = simulate_match(q1_loser, eliminator_winner, playoff_ball_by_ball, stage="playoff")
         
         print("\n--- FINAL ---")
         input("Press Enter to simulate the final...")
-        final_winner = simulate_match(q1_winner, q2_winner, playoff_ball_by_ball)
+        final_winner = simulate_match(q1_winner, q2_winner, playoff_ball_by_ball, stage="playoff")
     
     print(f"\n{'='*60}")
     print(f"🏆 LEAGUE CHAMPION: {final_winner} 🏆")

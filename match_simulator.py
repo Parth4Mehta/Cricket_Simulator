@@ -673,7 +673,7 @@ def print_scorecard(team_name, batting_team, score, wickets, batting_stats, bowl
     console.print()
 
 
-def simulate_match(teamA_name, teamB_name, ball_by_ball=False, ball_timer=None, innings_timer=None):
+def simulate_match(teamA_name, teamB_name, ball_by_ball=False, ball_timer=None, innings_timer=None, stage="league"):
     console = Console()
     
     # Rich match header
@@ -764,7 +764,7 @@ def simulate_match(teamA_name, teamB_name, ball_by_ball=False, ball_timer=None, 
 
         result = {"winner": winner, "by": margin, "A_score": A_score, "B_score": B_score}
 
-        path = database.save_match_file(teamA_name, teamB_name, A_bat, A_bowl, B_bat, B_bowl, teamA_objs=A, teamB_objs=B, result=result, A_score=A_score, B_score=B_score)
+        path = database.save_match_file(teamA_name, teamB_name, A_bat, A_bowl, B_bat, B_bowl, teamA_objs=A, teamB_objs=B, result=result, A_score=A_score, B_score=B_score, stage=stage)
         database.update_players_from_match(teamA_name, A, A_bat, A_bowl)
         database.update_players_from_match(teamB_name, B, B_bat, B_bowl)
 

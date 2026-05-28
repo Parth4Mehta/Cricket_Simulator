@@ -146,8 +146,39 @@ def simulate_league(format_id=None, selected_teams=None):
     # Get the appropriate format function and run it
     format_function = get_format_function(format_id)
     champion = format_function(selected_teams, playoff_ball_by_ball, league_ball_by_ball)
-    
+
+    # Offer to archive into the historical database.
+    _prompt_archive(champion)
+
     return champion
+
+
+def _prompt_archive(champion):
+    """Ask the user whether to archive the just-completed season into the
+    historical database. Safe to skip; the user can also clear via menu 5
+    without archiving if they don't want to keep this season.
+    """
+    print("\n" + "=" * 60)
+    print("ARCHIVE THIS SEASON?")
+    print("=" * 60)
+    print("This will copy the current points table, all matches, and all")
+    print("batting/bowling cards into the historical database as a new")
+    print("season. The current data stays put (use menu option 5 to clear).")
+    print()
+    answer = input("Add this season to historical database? (y/n): ").strip().lower()
+    if answer != "y":
+        print("Skipped archiving.")
+        return
+
+    try:
+        import historical
+        season_id = historical.archive_current_season(champion=champion)
+        if season_id is None:
+            print("Nothing to archive (no current matches found).")
+        else:
+            print(f"\nArchived as season_id={season_id}. Champion: {champion or '-'}")
+    except Exception as e:
+        print(f"Archive failed: {e}")
 
 
 if __name__ == "__main__":
