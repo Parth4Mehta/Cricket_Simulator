@@ -26,14 +26,13 @@ def show_main_menu():
     print("2. Simulate a Single Match")
     print("3. View Stats (Current or Historical)")
     print("4. View Full Player Stats (Top Players, Current or Historical)")
-    print("5. Clear Database & Start Fresh")
-    print("6. Configure Game Difficulty")
-    print("7. Configure Ball-by-Ball Timers")
-    print("8. Lookup Player by Name")
-    print("9. Exit")
+    print("5. Clear Database (Current Season or Historical)")
+    print("6. Configure Game Settings")
+    print("7. Lookup Player by Name")
+    print("8. Exit")
     print()
 
-    choice = input("Select an option (1-9): ").strip()
+    choice = input("Select an option (1-8): ").strip()
     return choice
 
 
@@ -277,33 +276,126 @@ def menu_lookup_player():
 
 
 def menu_clear_database():
-    """Clear database and start fresh."""
-    print("\n" + "="*70)
+    """Clear database — branches into current-season vs historical."""
+    print("\n" + "=" * 70)
     print("CLEAR DATABASE")
-    print("="*70)
-    print("\nThis will delete all statistics and match records!")
-    
-    confirm = input("Are you sure? (yes/no): ").strip().lower()
-    if confirm == "yes":
-        clear_database()
-        print("Database cleared successfully!")
+    print("=" * 70)
+    print()
+    print("What do you want to clear?")
+    print("  1. Current season (working data: players, teams, matches)")
+    print("  2. Historical database (archived seasons)")
+    print("  3. Cancel")
+    choice = input("Select (1-3): ").strip()
+
+    if choice == "1":
+        _clear_current_season()
+    elif choice == "2":
+        _clear_historical()
     else:
         print("Operation cancelled.")
 
 
-def menu_configure():
-    """Configure game difficulty."""
-    print("\n" + "="*70)
-    print("GAME CONFIGURATION")
-    print("="*70)
-    print("\nChoose your game difficulty profile:")
-    
-    choose_profile()
+def _clear_current_season():
+    """Existing single yes/no confirm flow for the current season."""
+    print("\nThis will delete the current season's statistics and match records.")
+    confirm = input("Are you sure? (yes/no): ").strip().lower()
+    if confirm == "yes":
+        clear_database()
+        print("Current season cleared successfully!")
+    else:
+        print("Operation cancelled.")
 
 
-def menu_configure_timers():
-    """Configure ball-by-ball timers."""
-    configure_ball_by_ball_timers()
+def _clear_historical():
+    """Branch into 'all historical' vs 'a specific season', both with a
+    strict 'type DELETE to confirm' prompt because this is irreversible."""
+    import historical
+
+    seasons = historical.list_seasons()
+    if not seasons:
+        print("\nNo archived seasons exist. Nothing to clear.")
+        return
+
+    print("\nWhat would you like to clear from the historical database?")
+    print("  1. ALL historical seasons (wipes everything; season counter resets to 1)")
+    print("  2. A specific archived season")
+    print("  3. Cancel")
+    sub = input("Select (1-3): ").strip()
+
+    if sub == "1":
+        _clear_all_historical(historical)
+    elif sub == "2":
+        _clear_one_historical_season(historical)
+    else:
+        print("Operation cancelled.")
+
+
+def _clear_all_historical(historical):
+    """Strict-confirm flow for nuking ALL archived seasons."""
+    print("\n" + "!" * 70)
+    print("WARNING: this will permanently delete ALL archived seasons,")
+    print("all archived matches, all batting/bowling cards, and the")
+    print("snapshotted final standings. This cannot be undone.")
+    print("!" * 70)
+    typed = input(
+        "Type DELETE to confirm deletion of ALL historical seasons: "
+    ).strip()
+    if typed == "DELETE":
+        historical.clear_all_historical()
+        print("All historical data cleared. Next archived season will be 'Season 1'.")
+    else:
+        print("Confirmation text did not match. Operation cancelled.")
+
+
+def _clear_one_historical_season(historical):
+    """Strict-confirm flow for deleting a single archived season."""
+    historical.print_seasons_list()
+    sid_raw = input("Enter season_id to delete: ").strip()
+    try:
+        sid = int(sid_raw)
+    except ValueError:
+        print("Invalid season_id.")
+        return
+
+    seasons = historical.list_seasons()
+    if not any(s["season_id"] == sid for s in seasons):
+        print(f"season_id {sid} not found.")
+        return
+
+    typed = input(
+        f"Type DELETE to confirm deletion of season {sid}: "
+    ).strip()
+    if typed != "DELETE":
+        print("Confirmation text did not match. Operation cancelled.")
+        return
+
+    if historical.delete_season(sid):
+        print(f"Season {sid} deleted.")
+    else:
+        print(f"Could not delete season {sid} (no rows affected).")
+
+
+def menu_configure_settings():
+    """Combined game-settings submenu (difficulty + ball-by-ball timers)."""
+    print("\n" + "=" * 70)
+    print("CONFIGURE GAME SETTINGS")
+    print("=" * 70)
+    print()
+    print("Which setting do you want to configure?")
+    print("  1. Game Difficulty")
+    print("  2. Ball-by-Ball Timers")
+    print("  3. Back to main menu")
+    choice = input("Select (1-3): ").strip()
+
+    if choice == "1":
+        print("\nChoose your game difficulty profile:")
+        choose_profile()
+    elif choice == "2":
+        configure_ball_by_ball_timers()
+    elif choice == "3":
+        return
+    else:
+        print("Invalid choice. Returning to main menu.")
 
 
 def main():
@@ -328,16 +420,14 @@ def main():
             elif choice == "5":
                 menu_clear_database()
             elif choice == "6":
-                menu_configure()
+                menu_configure_settings()
             elif choice == "7":
-                menu_configure_timers()
-            elif choice == "8":
                 menu_lookup_player()
-            elif choice == "9":
+            elif choice == "8":
                 print("\nThanks for using CricSim! Goodbye!\n")
                 sys.exit(0)
             else:
-                print("Invalid choice! Please select 1-9.")
+                print("Invalid choice! Please select 1-8.")
         
         except KeyboardInterrupt:
             print("\n\nInterrupted by user.")

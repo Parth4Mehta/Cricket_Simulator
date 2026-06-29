@@ -177,6 +177,11 @@ def _prompt_archive(champion):
             print("Nothing to archive (no current matches found).")
         else:
             print(f"\nArchived as season_id={season_id}. Champion: {champion or '-'}")
+            # Auto-clear current season immediately on successful archive so
+            # the user is ready to start a fresh league without going through
+            # menu option 5 manually.
+            database.clear_database(silent=True)
+            print("Current season cleared.")
     except Exception as e:
         print(f"Archive failed: {e}")
 

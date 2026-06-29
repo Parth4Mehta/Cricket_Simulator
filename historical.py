@@ -157,6 +157,64 @@ def archive_current_season(champion=None):
 
 
 # ===========================================================================
+# Destructive operations (clearing historical data)
+# ===========================================================================
+
+def clear_all_historical():
+    """Wipe ALL archived seasons and reset the season_id counter.
+
+    Resets so the next archived season becomes 'Season 1' again.
+    """
+    with get_conn() as con:
+        for t in (
+            "historical_match_batting",
+            "historical_match_bowling",
+            "historical_matches",
+            "historical_team_standings",
+            "seasons",
+        ):
+            con.execute(f"DELETE FROM {t}")
+        con.execute(
+            "DELETE FROM sqlite_sequence WHERE name IN ('seasons', 'historical_matches')"
+        )
+
+
+def delete_season(season_id):
+    """Delete one archived season (and all its matches/standings/cards).
+
+    Returns True if a row was actually deleted, False if season_id was unknown.
+    Explicit child-table deletes are used (belt-and-suspenders) so this works
+    even if foreign keys aren't enforced on a given connection.
+    """
+    with get_conn() as con:
+        match_ids = [
+            r[0]
+            for r in con.execute(
+                "SELECT historical_match_id FROM historical_matches WHERE season_id = ?",
+                (season_id,),
+            ).fetchall()
+        ]
+        if match_ids:
+            placeholders = ",".join("?" * len(match_ids))
+            con.execute(
+                f"DELETE FROM historical_match_batting WHERE historical_match_id IN ({placeholders})",
+                match_ids,
+            )
+            con.execute(
+                f"DELETE FROM historical_match_bowling WHERE historical_match_id IN ({placeholders})",
+                match_ids,
+            )
+        con.execute(
+            "DELETE FROM historical_matches WHERE season_id = ?", (season_id,)
+        )
+        con.execute(
+            "DELETE FROM historical_team_standings WHERE season_id = ?", (season_id,)
+        )
+        cur = con.execute("DELETE FROM seasons WHERE season_id = ?", (season_id,))
+        return cur.rowcount > 0
+
+
+# ===========================================================================
 # Season metadata
 # ===========================================================================
 

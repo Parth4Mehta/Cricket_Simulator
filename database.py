@@ -454,14 +454,20 @@ def get_points_table_sorted():
     return sorted(table, key=lambda r: (r["points"], r["nrr"]), reverse=True)
 
 
-def clear_database():
-    """Wipe all rows from the SQLite tables. Keeps schema and the .db file."""
+def clear_database(silent=False):
+    """Wipe all rows from the SQLite tables. Keeps schema and the .db file.
+
+    Args:
+        silent: when True, suppress the success print so callers can render
+            their own message (used by the post-archive auto-clear flow).
+    """
     with get_conn() as con:
         for t in ("match_batting", "match_bowling", "matches",
                   "players", "teams", "cumulative_teams"):
             con.execute(f"DELETE FROM {t}")
         con.execute("DELETE FROM sqlite_sequence")
-    print("Database cleared.")
+    if not silent:
+        print("Database cleared.")
 
 
 def print_caps_and_table():
