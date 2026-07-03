@@ -734,107 +734,99 @@ def simulate_match(teamA_name, teamB_name, ball_by_ball=False, ball_timer=None, 
     else:
         winner = "TIE"
 
-    choice = "y"
-    if choice != "n":
-        # compute margin string for result
-        if winner == batting_first_name:
-            margin = f"{first_score - second_score} runs" if first_score != second_score else ""
-        elif winner == bowling_first_name:
-            # wickets remaining is 10 - wickets lost by winner (second_wk)
-            wickets_remaining = 10 - second_wk
-            margin = f"{wickets_remaining} wickets" if wickets_remaining >= 0 else ""
-        else:
-            margin = ""
+    # compute margin string for result
+    if winner == batting_first_name:
+        margin = f"{first_score - second_score} runs" if first_score != second_score else ""
+    elif winner == bowling_first_name:
+        # wickets remaining is 10 - wickets lost by winner (second_wk)
+        wickets_remaining = 10 - second_wk
+        margin = f"{wickets_remaining} wickets" if wickets_remaining >= 0 else ""
+    else:
+        margin = ""
 
-        # Map toss-based results back to teamA/teamB for database and display
-        if batting_first_name == teamA_name:
-            A_score, B_score = first_score, second_score
-            A_wk, B_wk = first_wk, second_wk
-            A_bat, A_bowl = first_bat, first_bowl
-            B_bat, B_bowl = second_bat, second_bowl
-            A = batting_first_team
-            B = bowling_first_team
-        else:
-            A_score, B_score = second_score, first_score
-            A_wk, B_wk = second_wk, first_wk
-            A_bat, A_bowl = second_bat, second_bowl
-            B_bat, B_bowl = first_bat, first_bowl
-            A = bowling_first_team
-            B = batting_first_team
+    # Map toss-based results back to teamA/teamB for database and display
+    if batting_first_name == teamA_name:
+        A_score, B_score = first_score, second_score
+        A_wk, B_wk = first_wk, second_wk
+        A_bat, A_bowl = first_bat, first_bowl
+        B_bat, B_bowl = second_bat, second_bowl
+        A = batting_first_team
+        B = bowling_first_team
+    else:
+        A_score, B_score = second_score, first_score
+        A_wk, B_wk = second_wk, first_wk
+        A_bat, A_bowl = second_bat, second_bowl
+        B_bat, B_bowl = first_bat, first_bowl
+        A = bowling_first_team
+        B = batting_first_team
 
-        result = {"winner": winner, "by": margin, "A_score": A_score, "B_score": B_score}
+    result = {"winner": winner, "by": margin, "A_score": A_score, "B_score": B_score}
 
-        path = database.save_match_file(teamA_name, teamB_name, A_bat, A_bowl, B_bat, B_bowl, teamA_objs=A, teamB_objs=B, result=result, A_score=A_score, B_score=B_score, stage=stage)
-        database.update_players_from_match(teamA_name, A, A_bat, A_bowl)
-        database.update_players_from_match(teamB_name, B, B_bat, B_bowl)
+    path = database.save_match_file(teamA_name, teamB_name, A_bat, A_bowl, B_bat, B_bowl, teamA_objs=A, teamB_objs=B, result=result, A_score=A_score, B_score=B_score, stage=stage)
+    database.update_players_from_match(teamA_name, A, A_bat, A_bowl)
+    database.update_players_from_match(teamB_name, B, B_bat, B_bowl)
 
-        A_balls_faced = sum(s.get("balls", 0) for s in A_bat)
-        B_balls_faced = sum(s.get("balls", 0) for s in B_bat)
+    A_balls_faced = sum(s.get("balls", 0) for s in A_bat)
+    B_balls_faced = sum(s.get("balls", 0) for s in B_bat)
 
-        # If the chasing team finished the chase before 20 overs,
-        # project how many runs they would have scored in a full 20.0 overs
-        # using their current runs-per-ball rate and show that in the
-        # concise match summary. Both teams are displayed with (20.0).
-        display_A_score = A_score
-        display_B_score = B_score
-        total_balls = 20 * 6
-        
-        # Determine which team was chasing and project their score if finished early
-        if batting_first_name == teamA_name:
-            # teamB was chasing
-            chasing_balls = B_balls_faced
-            chasing_score = B_score
-            if B_score >= target and chasing_balls < total_balls and chasing_balls > 0:
-                runs_per_ball = chasing_score / chasing_balls
-                remaining_balls = total_balls - chasing_balls
-                projected_additional = runs_per_ball * remaining_balls
-                display_B_score = int(round(chasing_score + projected_additional))
-        else:
-            # teamA was chasing
-            chasing_balls = A_balls_faced
-            chasing_score = A_score
-            if A_score >= target and chasing_balls < total_balls and chasing_balls > 0:
-                runs_per_ball = chasing_score / chasing_balls
-                remaining_balls = total_balls - chasing_balls
-                projected_additional = runs_per_ball * remaining_balls
-                display_A_score = int(round(chasing_score + projected_additional))
+    # If the chasing team finished the chase before 20 overs,
+    # project how many runs they would have scored in a full 20.0 overs
+    # using their current runs-per-ball rate and show that in the
+    # concise match summary. Both teams are displayed with (20.0).
+    display_A_score = A_score
+    display_B_score = B_score
+    total_balls = 20 * 6
+    
+    # Determine which team was chasing and project their score if finished early
+    if batting_first_name == teamA_name:
+        # teamB was chasing
+        chasing_balls = B_balls_faced
+        chasing_score = B_score
+        if B_score >= target and chasing_balls < total_balls and chasing_balls > 0:
+            runs_per_ball = chasing_score / chasing_balls
+            remaining_balls = total_balls - chasing_balls
+            projected_additional = runs_per_ball * remaining_balls
+            display_B_score = int(round(chasing_score + projected_additional))
+    else:
+        # teamA was chasing
+        chasing_balls = A_balls_faced
+        chasing_score = A_score
+        if A_score >= target and chasing_balls < total_balls and chasing_balls > 0:
+            runs_per_ball = chasing_score / chasing_balls
+            remaining_balls = total_balls - chasing_balls
+            projected_additional = runs_per_ball * remaining_balls
+            display_A_score = int(round(chasing_score + projected_additional))
 
-        # Rich match result summary
-        console = Console()
-        
-        result_table = Table(title="📊 MATCH SUMMARY", show_header=True, 
-                           header_style="bold magenta", box=box.DOUBLE)
-        result_table.add_column("Team", style="cyan", width=20)
-        result_table.add_column("Score", justify="center", style="yellow")
-        result_table.add_column("Overs", justify="center", style="white")
-        
-        result_table.add_row(teamA_name, f"{display_A_score}/{A_wk}", "20.0")
-        result_table.add_row(teamB_name, f"{display_B_score}/{B_wk}", "20.0")
-        
-        console.print()
-        console.print(result_table)
-        
-        # Match result with winner highlighted
-        if winner == "TIE":
-            result_text = Text("🤝 MATCH TIED 🤝", style="bold yellow", justify="center")
-        else:
-            result_text = Text()
-            result_text.append("🏆 ", style="bold yellow")
-            result_text.append(winner, style="bold green")
-            result_text.append(" WON BY ", style="bold white")
-            result_text.append(margin.upper(), style="bold cyan")
-            result_text.append(" 🏆", style="bold yellow")
-        
-        console.print()
-        console.print(Panel(result_text, border_style="green", box=box.DOUBLE))
-        console.print()
+    # Rich match result summary
+    console = Console()
+    
+    result_table = Table(title="📊 MATCH SUMMARY", show_header=True, 
+                       header_style="bold magenta", box=box.DOUBLE)
+    result_table.add_column("Team", style="cyan", width=20)
+    result_table.add_column("Score", justify="center", style="yellow")
+    result_table.add_column("Overs", justify="center", style="white")
+    
+    result_table.add_row(teamA_name, f"{display_A_score}/{A_wk}", "20.0")
+    result_table.add_row(teamB_name, f"{display_B_score}/{B_wk}", "20.0")
+    
+    console.print()
+    console.print(result_table)
+    
+    # Match result with winner highlighted
+    if winner == "TIE":
+        result_text = Text("🤝 MATCH TIED 🤝", style="bold yellow", justify="center")
+    else:
+        result_text = Text()
+        result_text.append("🏆 ", style="bold yellow")
+        result_text.append(winner, style="bold green")
+        result_text.append(" WON BY ", style="bold white")
+        result_text.append(margin.upper(), style="bold cyan")
+        result_text.append(" 🏆", style="bold yellow")
+    
+    console.print()
+    console.print(Panel(result_text, border_style="green", box=box.DOUBLE))
+    console.print()
 
-        database.update_team_from_match(teamA_name, teamB_name, A_score, B_score, A_balls_faced, B_balls_faced, winner)
+    database.update_team_from_match(teamA_name, teamB_name, A_score, B_score, A_balls_faced, B_balls_faced, winner)
 
     return winner
-
-
-if __name__ == "__main__":
-    choose_profile()
-    simulate_match("KKR", "MI", False)
-    simulate_match("SRH", "MI", False)

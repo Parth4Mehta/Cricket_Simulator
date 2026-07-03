@@ -9,6 +9,7 @@ import random
 from match_simulator import simulate_match
 import database
 from config_manager import reset_advanced_profile
+from database import print_points_table
 
 
 def create_double_round_robin_fixtures(teams):
@@ -53,6 +54,8 @@ def simulate_double_round_robin_playoff(selected_teams, playoff_ball_by_ball=Fal
 
     # Play league stage matches
     for idx, (A, B) in enumerate(fixtures, 1):
+        if league_ball_by_ball:
+            input(f"\nPress Enter to simulate Match {idx}/{len(fixtures)}: {A} vs {B}...")
         print(f"[Match {idx}/{len(fixtures)}] ", end="" if not league_ball_by_ball else "\n")
         winner = simulate_match(A, B, league_ball_by_ball, ball_timer=0, innings_timer=0)
         if winner != "TIE":
@@ -60,6 +63,8 @@ def simulate_double_round_robin_playoff(selected_teams, playoff_ball_by_ball=Fal
         else:
             points_in_this_season[A] = points_in_this_season.get(A, 0) + 1
             points_in_this_season[B] = points_in_this_season.get(B, 0) + 1
+        if league_ball_by_ball:
+            print_points_table()
     
     print("\n" + "="*60)
     print("LEAGUE STAGE COMPLETED")

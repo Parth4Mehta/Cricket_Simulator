@@ -184,28 +184,4 @@ def _prompt_archive(champion):
             print("Current season cleared.")
     except Exception as e:
         print(f"Archive failed: {e}")
-
-
-if __name__ == "__main__":
-    from match_simulator import choose_profile_default
-    
-    # Load default difficulty profile
-    choose_profile_default()
-    
-    database.print_caps_and_table()
-    clear_database()
-    season_wins = {}
-    
-    # Simulate one season (change range to simulate multiple)
-    for i in range(1):
-        winner = simulate_league()
-        print(f"Season {i+1} completed.")
-        season_wins[winner] = season_wins.get(winner, 0) + 1
-    
-    print("\n" + "="*60)
-    print("SEASON SUMMARY")
-    print("="*60)
-    print("Number of seasons won by each team:")
-    for team, wins in sorted(season_wins.items(), key=lambda x: -x[1]):
-        print(f"  {team}: {wins} season(s)")
     print("="*60)

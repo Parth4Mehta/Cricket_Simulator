@@ -14,16 +14,6 @@ from datetime import datetime
 from db.connection import ensure_db, get_conn
 
 
-def ensure_dirs():
-    """Backwards-compatible no-op that just makes sure the DB exists.
-
-    Old callers used this to make sure the database/ directory existed
-    before writing JSON. The DB layer handles its own initialization, so
-    this is now a thin wrapper around ensure_db().
-    """
-    ensure_db()
-
-
 def _row_to_player_dict(row):
     """Convert a `players` row into the dict shape callers used to see."""
     return {
@@ -542,6 +532,50 @@ def print_caps_and_table():
 
         print("\n===== POINTS TABLE =====")
         table = get_points_table_sorted()
+        print(f"{'Team':8} {'P':>3} {'W':>3} {'L':>3} {'T':>3} {'Pts':>4} {'NRR':>7}")
+        for r in table:
+            print(f"{r['team']:8} {r['played']:>3} {r['won']:>3} {r['lost']:>3} {r['tied']:>3} {r['points']:>4} {r['nrr']:>7.3f}")
+
+
+def print_points_table():
+    """Print only the points table (no orange/purple caps)."""
+    try:
+        from rich.console import Console
+        from rich.table import Table
+        from rich import box
+        console = Console()
+    except Exception:
+        console = None
+
+    table = get_points_table_sorted()
+
+    if console:
+        points_table = Table(title="POINTS TABLE", box=box.HEAVY_HEAD, style="bold white on blue")
+        points_table.add_column("#", justify="center", style="yellow")
+        points_table.add_column("Team", style="bold cyan")
+        points_table.add_column("P", justify="right", style="white")
+        points_table.add_column("W", justify="right", style="green")
+        points_table.add_column("L", justify="right", style="red")
+        points_table.add_column("T", justify="right", style="yellow")
+        points_table.add_column("Pts", justify="right", style="bold white")
+        points_table.add_column("NRR", justify="right", style="cyan")
+
+        for idx, r in enumerate(table, 1):
+            points_table.add_row(
+                str(idx),
+                r['team'],
+                str(r['played']),
+                str(r['won']),
+                str(r['lost']),
+                str(r['tied']),
+                str(r['points']),
+                f"{r['nrr']:>7.3f}",
+            )
+
+        console.print(points_table)
+        console.print()
+    else:
+        print("\n===== POINTS TABLE =====")
         print(f"{'Team':8} {'P':>3} {'W':>3} {'L':>3} {'T':>3} {'Pts':>4} {'NRR':>7}")
         for r in table:
             print(f"{r['team']:8} {r['played']:>3} {r['won']:>3} {r['lost']:>3} {r['tied']:>3} {r['points']:>4} {r['nrr']:>7.3f}")
