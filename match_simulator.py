@@ -3,6 +3,7 @@ import time
 from teams import get_teams, get_bowling_order, get_bowler_ranking
 import database
 from config_manager import get_profile, list_profiles, get_default_profile, update_advanced_profile, reset_advanced_profile, get_bowler_fatigue_settings
+from probability import calculate_effective_bowling, calculate_ball_probabilities, determine_ball_outcome
 from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel
@@ -351,6 +352,16 @@ def simulate_innings(batting_team, bowling_team, ball_by_ball=False, target=None
     BOWLER_UP_VALUE = fatigue_settings.get("up_value", 0.3)
     BOWLER_FATIGUE_RATE = fatigue_settings.get("fatigue_rate", 0.2)
 
+    coefficients = (
+        FOUR_COEFF,
+        SIX_COEFF,
+        WICKET_COEFF,
+        DOT_BALL_COEFF,
+        BATSMAN_FOUR_BOOST,
+        BATSMAN_SIX_BOOST,
+        BOWLER_WICKET_BOOST,
+    )
+
     fall_of_wickets = []
 
     balls_bowled = 0
@@ -476,33 +487,19 @@ def simulate_innings(batting_team, bowling_team, ball_by_ball=False, target=None
             balls_bowled += 1
 
             # Calculate effective bowling strength with fatigue
-            # Formula: effective = base + up_value - (fatigue_rate * overs_bowled)
-            overs_bowled_by_bowler = bowler_stats["overs"]  # overs completed before this over
-            effective_bowling = bowler.bowling + BOWLER_UP_VALUE - (BOWLER_FATIGUE_RATE * overs_bowled_by_bowler)
+            overs_bowled_by_bowler = bowler_stats["overs"]
+            effective_bowling = calculate_effective_bowling(
+                bowler.bowling, BOWLER_UP_VALUE, BOWLER_FATIGUE_RATE, overs_bowled_by_bowler
+            )
 
-            p4 = FOUR_COEFF + striker.batting * BATSMAN_FOUR_BOOST - effective_bowling * 0.0006
-            p6 = SIX_COEFF + striker.batting * BATSMAN_SIX_BOOST - effective_bowling * 0.0003
-            pw = WICKET_COEFF - striker.batting * 0.002 + effective_bowling * BOWLER_WICKET_BOOST #0.002 is good
-            pdot = DOT_BALL_COEFF - striker.batting * 0.01 + effective_bowling * 0.0008
-
-            #Make last 4 overs more exciting - increase chances of boundaries and wickets
-            if over_num >= total_overs - 4:
-                p4 += striker.batting * 0.009 - effective_bowling * 0.0002
-                p6 += striker.batting * 0.006 - effective_bowling * 0.0001
-                pw += effective_bowling * 0.006
-                pdot -= 0.05 - effective_bowling * 0.0002
-            
-            total = p4 + p6 + pw + pdot + 0.3
-            p4 /= total
-            p6 /= total
-            pw /= total
-            pdot /= total
+            p4, p6, pw, pdot = calculate_ball_probabilities(
+                striker.batting, effective_bowling, over_num, total_overs, coefficients
+            )
 
             striker_stats["balls"] += 1
-            outcome = random.random()
+            outcome_type, runs = determine_ball_outcome(p4, p6, pw, pdot)
 
-            if outcome < pw:
-                # wicket: striker out
+            if outcome_type == "wicket":
                 wickets += 1
                 bowler_stats["wickets"] += 1
                 striker_stats["dismissal"] = generate_dismissal(bowler, bowling_team, striker.name)
@@ -516,43 +513,38 @@ def simulate_innings(batting_team, bowling_team, ball_by_ball=False, target=None
                 else:
                     # all out
                     if ball_by_ball:
-                        # print final over summary
                         _print_over_summary(per_over_tokens, over_num, bowler, bowler_stats, balls_bowled, striker_idx, non_striker_idx)
                     return score, wickets, batting_stats, bowling_stats, fall_of_wickets
 
-            elif outcome < pw + p6:
+            elif outcome_type == "six":
                 score += 6
                 striker_stats["runs"] += 6
                 striker_stats["6s"] += 1
                 bowler_stats["runs"] += 6
                 per_over_tokens.append('6')
 
-            elif outcome < pw + p6 + p4:
+            elif outcome_type == "four":
                 score += 4
                 striker_stats["runs"] += 4
                 striker_stats["4s"] += 1
                 bowler_stats["runs"] += 4
                 per_over_tokens.append('4')
 
-            elif outcome < pw + p6 + p4 + pdot:
-                # dot ball
+            elif outcome_type == "dot":
                 per_over_tokens.append('.')
 
-            else:
-                    run = random.choices([1, 2, 3], weights=[60, 30, 10], k=1)[0]
-                    score += run
-                    striker_stats["runs"] += run
-                    bowler_stats["runs"] += run
-                    per_over_tokens.append(str(run))
+            else:  # runs (1, 2, or 3)
+                score += runs
+                striker_stats["runs"] += runs
+                bowler_stats["runs"] += runs
+                per_over_tokens.append(str(runs))
 
-                    # change strike on odd runs
-                    if run % 2 == 1:
-                        striker_idx, non_striker_idx = non_striker_idx, striker_idx
+                # change strike on odd runs
+                if runs % 2 == 1:
+                    striker_idx, non_striker_idx = non_striker_idx, striker_idx
+
             # print ball-by-ball token if enabled — update same over line
             if ball_by_ball:
-                # for wicket, ensure token present
-                if outcome < pw and not per_over_tokens:
-                    per_over_tokens.append('W')
                 # overwrite same line for current over
                 print(f"Over {over_num+1}: {' '.join(per_over_tokens)}", end='\r', flush=True)
                 time.sleep(ball_timer if ball_timer is not None else BALL_TIMER)
