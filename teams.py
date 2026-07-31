@@ -263,11 +263,11 @@ def get_teams():
             Player("N. Zadran", 7.2, 2.0),
             Player("K. Janat", 6.8, 6.5), # G
             Player("A. Omarzai", 7.4, 7.5), # F
-            Player("M. Nabi", 7.0, 7.7), # E
-            Player("R. Khan", 6.0, 9.3), # A
-            Player("F. Farooqi", 2.0, 8.0), # B
+            Player("M. Nabi", 7.0, 7.9), # E
+            Player("R. Khan", 5.3, 9.0), # A
+            Player("F. Farooqi", 2.0, 8.0), # C
             Player("N. Haq", 1.5, 7.8),# D
-            Player("N. Ahmad", 1.3, 8.0), # C
+            Player("N. Ahmad", 1.3, 8.4), # B
             # Player("F. Ahmad", 5.5, 7.5),
             # Player("N. Kharote", 5.0, 5.5),
             # Player("M. Ishaq", 6.5, 2.0),
@@ -278,10 +278,10 @@ def get_teams():
             Player("T. Head", 9.0, 2.0),
             Player("D. Warner", 8.8, 2.5),
             Player("M. Marsh", 7.9, 5.0), # G
-            Player("M. Wade", 7.8, 2.0),
-            Player("G. Maxwell", 8.2, 6.1), # F
+            Player("M. Wade", 7.7, 2.0),
+            Player("G. Maxwell", 8.2, 5.8), # F
             Player("T. David", 8.3, 2.0),
-            Player("M. Stoinis", 7.1, 6.2), # E
+            Player("M. Stoinis", 6.1, 5.9), # E
             Player("P. Cummins", 3.9, 8.3), # D
             Player("M. Starc", 2.6, 8.8), # A
             Player("J. Hazlewood", 1.5, 8.7), # B
@@ -331,7 +331,7 @@ def get_teams():
         "ENG": [
             Player("P. Salt", 8.7, 2.0),
             Player("J. Bairstow", 8.3, 2.0),
-            Player("J. Buttler", 9.0, 2.0),
+            Player("J. Buttler", 9.2, 2.0),
             Player("H. Brook", 8.3, 2.0),
             Player("W. Jacks", 8.0, 6.0), # G
             Player("L. Livingstone", 7.7, 6.8), # F
@@ -347,12 +347,12 @@ def get_teams():
         ],
 
         "IND": [
-            Player("R. Sharma", 8.5, 2.0),
-            Player("Y. Jaiswal", 8.7, 2.0),
-            Player("V. Kohli", 9.1, 2.0),
-            Player("S. Yadav", 8.9, 2.0),
-            Player("R. Pant", 8.3, 2.0),
-            Player("H. Pandya", 8.1, 7.8), # E
+            Player("R. Sharma", 8.3, 2.0),
+            Player("Y. Jaiswal", 8.4, 2.0),
+            Player("V. Kohli", 8.9, 2.0),
+            Player("S. Yadav", 8.7, 2.0),
+            Player("R. Pant", 8.0, 2.0),
+            Player("H. Pandya", 8.2, 7.8), # E
             Player("S. Dube", 7.9, 6.0), # F
             Player("A. Patel", 6.8, 8.0), # D
             Player("K. Yadav", 2.5, 9.0), # B
@@ -437,7 +437,7 @@ def get_teams():
         ],
 
         "NZL": [
-            Player("F. Allen", 8.3, 2.0),
+            Player("F. Allen", 8.6, 2.0),
             Player("D. Conway", 8.4, 2.0),
             Player("R. Ravindra", 8.2, 5.5), # G
             Player("K. Williamson", 8.4, 2.0),
@@ -475,8 +475,8 @@ def get_teams():
         "PAK": [
             Player("B. Azam", 8.3, 2.0),
             Player("I. Ahmed", 7.4, 2.0),
-            Player("F. Zaman", 8.1, 2.0),
-            Player("M. Rizwan", 8.1, 2.0),
+            Player("F. Zaman", 8.3, 2.0),
+            Player("M. Rizwan", 8.4, 2.0),
             Player("S. Ayub", 7.5, 2.0),
             Player("I. Wasim", 6.3, 7.2), # F
             Player("A. Ahmed", 4.0, 7.6), # E
@@ -528,12 +528,12 @@ def get_teams():
 
         "RSA": [
             Player("Q. de Kock", 8.4, 2.0),
-            Player("A. Markram", 8.5, 2.0),
-            Player("R. Rickelton", 8.2, 2.0),
+            Player("A. Markram", 8.7, 2.0),
+            Player("R. Rickelton", 8.1, 2.0),
             Player("H. Klaasen", 9.0, 2.0),
             Player("T. Stubbs", 8.6, 3.8),
             Player("D. Miller", 8.5, 2.0),
-            Player("M. Jansen", 6.3, 8.2), # D
+            Player("M. Jansen", 5.3, 8.2), # D
             Player("A. Nortje", 1.2, 8.6), # B
             Player("K. Rabada", 1.2, 8.9), # A
             Player("K. Maharaj", 1.0, 8.3), # C
@@ -645,7 +645,7 @@ BOWLING_ORDERS = {
     "GL16": "ABABCDECDECDECDEABAB",
     "RPS16": "ABABCDECDECDECDEABAB",
     # T20 World Cup Teams
-    "AFG": "DBDBDACEACEACEACFBDB",
+    "AFG": "DCDCDABEABEABEABFCDC",
     "AUS": "BABDBAECDCFECDCFADAB",
     "BAN": "ACADCEBFBFCDBEBDACAD",
     "CAN": "ABABCDECDECDECDEABAB",
