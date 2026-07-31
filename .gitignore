@@ -40,3 +40,6 @@ database/
 *.tmp
 tempCodeRunnerFile.py
 .env
+
+# Personal assistant instructions (not for version control)
+INSTRUCTIONS.md

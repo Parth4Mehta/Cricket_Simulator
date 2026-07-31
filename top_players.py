@@ -1,7 +1,8 @@
 """
 top_players.py
 
-Compute top 10 players for various categories using the simulator database.
+Compute top 10 players for various categories from the SQLite-backed
+CricSim database.
 
 Categories:
 - Most runs
@@ -11,70 +12,64 @@ Categories:
 - Most sixes
 - Highest Strike Rate
 - Best Bowling (by best_bowling field: wickets desc, runs asc)
-- Best Economy (aggregated from match files' bowling stats)
-
-The script prefers `database/match_stats_player_stats.json` (user-provided name),
-then falls back to `database/player_stats.json`. For economy it aggregates
-bowling `runs` and `balls` from files under `database/match_stats/`.
+- Best Economy (aggregated from match_bowling rows)
 
 Usage:
     python top_players.py --print
-    python top_players.py --output database/top_players_summary.json
-
 """
-import os
-import json
 import argparse
 from collections import defaultdict
+
 from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel
-from rich.text import Text
 
-DEFAULT_SOURCES = [
-    os.path.join("database", "match_stats_player_stats.json"),
-    os.path.join("database", "player_stats.json"),
-]
-MATCH_DIR = os.path.join("database", "match_stats")
+from db.connection import get_conn
 
 
-def load_json_if_exists(path):
-    if os.path.exists(path):
-        with open(path, "r", encoding="utf-8") as f:
-            return json.load(f)
-    return None
+def load_players_from_db():
+    """Read aggregate player stats from SQLite and shape them like the
+    legacy JSON dict that compute_categories() consumes."""
+    with get_conn() as con:
+        rows = con.execute("SELECT * FROM players").fetchall()
+    players = {}
+    for r in rows:
+        players[r["name"]] = {
+            "team": r["team"],
+            "runs": r["runs"],
+            "balls_faced": r["balls_faced"],
+            "fours": r["fours"],
+            "sixes": r["sixes"],
+            "matches": r["matches"],
+            "outs": r["outs"],
+            "not_outs": r["not_outs"],
+            "highest_score": r["highest_score"],
+            "wickets": r["wickets"],
+            "balls_bowled": r["balls_bowled"],
+            "best_bowling": {
+                "wickets": r["best_bowling_wickets"],
+                "runs": r["best_bowling_runs"],
+            },
+        }
+    return players
 
 
-def aggregate_bowling_from_matches(match_dir):
-    """Aggregate bowling runs and balls per bowler from match JSON files.
+def aggregate_bowling_from_db():
+    """Aggregate bowling runs and balls per bowler from match_bowling rows.
+
     Returns dict: name -> {"runs_conceded": int, "balls_bowled": int}
     """
     agg = defaultdict(lambda: {"runs_conceded": 0, "balls_bowled": 0})
-    if not os.path.isdir(match_dir):
-        return agg
-
-    for fn in os.listdir(match_dir):
-        path = os.path.join(match_dir, fn)
-        if not fn.lower().endswith(".json"):
-            continue
-        try:
-            with open(path, "r", encoding="utf-8") as f:
-                data = json.load(f)
-        except Exception:
-            continue
-
-        # Each match file has keys: 'meta' and team names mapping to {"batting": [...], "bowling": {...}}
-        for key, val in data.items():
-            if key == "meta":
-                continue
-            team_section = val
-            bowling = team_section.get("bowling") or {}
-            # bowling is expected to be dict bowler_name -> {"overs":..., "balls":..., "runs":..., "wickets":...}
-            for bowler, st in bowling.items():
-                runs = st.get("runs", 0)
-                balls = st.get("balls", 0)
-                agg[bowler]["runs_conceded"] += runs
-                agg[bowler]["balls_bowled"] += balls
+    with get_conn() as con:
+        rows = con.execute(
+            "SELECT player_name, SUM(runs) AS runs_conceded, SUM(balls) AS balls_bowled "
+            "FROM match_bowling GROUP BY player_name"
+        ).fetchall()
+    for r in rows:
+        agg[r["player_name"]] = {
+            "runs_conceded": r["runs_conceded"] or 0,
+            "balls_bowled": r["balls_bowled"] or 0,
+        }
     return agg
 
 
@@ -254,29 +249,16 @@ def compute_categories(players, match_bowling_agg):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--source", help="Player stats JSON file (preferred)", default=None)
-    parser.add_argument("--match-dir", help="Match stats directory to aggregate bowling (default database/match_stats)", default=MATCH_DIR)
-    parser.add_argument("--output", help="Output JSON path (optional)", default=None)
-    parser.add_argument("--print", dest="print_out", action="store_true", help="Print results to console")
-    args = parser.parse_args()
+    parser.add_argument("--print", dest="print_out", action="store_true",
+                        help="Print results to console (default)")
+    parser.parse_args()
 
-    # Determine source
-    players = None
-    if args.source:
-        players = load_json_if_exists(args.source)
-        if players is None:
-            print(f"Source file {args.source} not found or invalid.")
-    else:
-        for p in DEFAULT_SOURCES:
-            players = load_json_if_exists(p)
-            if players is not None:
-                break
-
-    if players is None:
-        print("No player stats JSON found. Exiting.")
+    players = load_players_from_db()
+    if not players:
+        print("No player stats found in the database. Play some matches first.")
         return 1
 
-    match_bowling_agg = aggregate_bowling_from_matches(args.match_dir)
+    match_bowling_agg = aggregate_bowling_from_db()
 
     results = compute_categories(players, match_bowling_agg)
 
@@ -469,18 +451,6 @@ def main():
         else:
             console.print(table)
         console.print()  # Add spacing between tables
-
-    if args.output:
-        outp = args.output
-    else:
-        outp = os.path.join("database", "top_players_summary.json")
-
-    try:
-        with open(outp, "w", encoding="utf-8") as f:
-            json.dump(results, f, indent=4)
-        console.print(f"\n[green]✅ Results written to: {outp}[/green]")
-    except Exception as e:
-        console.print(f"[red]❌ Failed to write output file: {e}[/red]")
 
     return 0
 

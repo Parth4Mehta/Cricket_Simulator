@@ -3,6 +3,7 @@ import time
 from teams import get_teams, get_bowling_order, get_bowler_ranking
 import database
 from config_manager import get_profile, list_profiles, get_default_profile, update_advanced_profile, reset_advanced_profile, get_bowler_fatigue_settings
+from probability import calculate_effective_bowling, calculate_ball_probabilities, determine_ball_outcome
 from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel
@@ -325,7 +326,7 @@ def generate_bowling_order(bowling_team, custom_order=None):
     return order  # 20 overs
 
 
-def simulate_innings(batting_team, bowling_team, ball_by_ball=False, target=None, total_overs=20, team_name=None, bowling_team_name=None):
+def simulate_innings(batting_team, bowling_team, ball_by_ball=False, target=None, total_overs=20, team_name=None, bowling_team_name=None, ball_timer=None, innings_timer=None):
     # Get custom bowling order for the bowling team, if defined
     custom_order = get_bowling_order(bowling_team_name) if bowling_team_name else None
     bowling_order = generate_bowling_order(bowling_team, custom_order)
@@ -350,6 +351,16 @@ def simulate_innings(batting_team, bowling_team, ball_by_ball=False, target=None
     fatigue_settings = get_bowler_fatigue_settings()
     BOWLER_UP_VALUE = fatigue_settings.get("up_value", 0.3)
     BOWLER_FATIGUE_RATE = fatigue_settings.get("fatigue_rate", 0.2)
+
+    coefficients = (
+        FOUR_COEFF,
+        SIX_COEFF,
+        WICKET_COEFF,
+        DOT_BALL_COEFF,
+        BATSMAN_FOUR_BOOST,
+        BATSMAN_SIX_BOOST,
+        BOWLER_WICKET_BOOST,
+    )
 
     fall_of_wickets = []
 
@@ -476,33 +487,19 @@ def simulate_innings(batting_team, bowling_team, ball_by_ball=False, target=None
             balls_bowled += 1
 
             # Calculate effective bowling strength with fatigue
-            # Formula: effective = base + up_value - (fatigue_rate * overs_bowled)
-            overs_bowled_by_bowler = bowler_stats["overs"]  # overs completed before this over
-            effective_bowling = bowler.bowling + BOWLER_UP_VALUE - (BOWLER_FATIGUE_RATE * overs_bowled_by_bowler)
+            overs_bowled_by_bowler = bowler_stats["overs"]
+            effective_bowling = calculate_effective_bowling(
+                bowler.bowling, BOWLER_UP_VALUE, BOWLER_FATIGUE_RATE, overs_bowled_by_bowler
+            )
 
-            p4 = FOUR_COEFF + striker.batting * BATSMAN_FOUR_BOOST - effective_bowling * 0.0006
-            p6 = SIX_COEFF + striker.batting * BATSMAN_SIX_BOOST - effective_bowling * 0.0003
-            pw = WICKET_COEFF - striker.batting * 0.002 + effective_bowling * BOWLER_WICKET_BOOST #0.002 is good
-            pdot = DOT_BALL_COEFF - striker.batting * 0.01 + effective_bowling * 0.0008
-
-            #Make last 4 overs more exciting - increase chances of boundaries and wickets
-            if over_num >= total_overs - 4:
-                p4 += striker.batting * 0.009 - effective_bowling * 0.0002
-                p6 += striker.batting * 0.006 - effective_bowling * 0.0001
-                pw += effective_bowling * 0.006
-                pdot -= 0.05 - effective_bowling * 0.0002
-            
-            total = p4 + p6 + pw + pdot + 0.3
-            p4 /= total
-            p6 /= total
-            pw /= total
-            pdot /= total
+            p4, p6, pw, pdot = calculate_ball_probabilities(
+                striker.batting, effective_bowling, over_num, total_overs, coefficients
+            )
 
             striker_stats["balls"] += 1
-            outcome = random.random()
+            outcome_type, runs = determine_ball_outcome(p4, p6, pw, pdot)
 
-            if outcome < pw:
-                # wicket: striker out
+            if outcome_type == "wicket":
                 wickets += 1
                 bowler_stats["wickets"] += 1
                 striker_stats["dismissal"] = generate_dismissal(bowler, bowling_team, striker.name)
@@ -516,46 +513,41 @@ def simulate_innings(batting_team, bowling_team, ball_by_ball=False, target=None
                 else:
                     # all out
                     if ball_by_ball:
-                        # print final over summary
                         _print_over_summary(per_over_tokens, over_num, bowler, bowler_stats, balls_bowled, striker_idx, non_striker_idx)
                     return score, wickets, batting_stats, bowling_stats, fall_of_wickets
 
-            elif outcome < pw + p6:
+            elif outcome_type == "six":
                 score += 6
                 striker_stats["runs"] += 6
                 striker_stats["6s"] += 1
                 bowler_stats["runs"] += 6
                 per_over_tokens.append('6')
 
-            elif outcome < pw + p6 + p4:
+            elif outcome_type == "four":
                 score += 4
                 striker_stats["runs"] += 4
                 striker_stats["4s"] += 1
                 bowler_stats["runs"] += 4
                 per_over_tokens.append('4')
 
-            elif outcome < pw + p6 + p4 + pdot:
-                # dot ball
+            elif outcome_type == "dot":
                 per_over_tokens.append('.')
 
-            else:
-                    run = random.choices([1, 2, 3], weights=[60, 30, 10], k=1)[0]
-                    score += run
-                    striker_stats["runs"] += run
-                    bowler_stats["runs"] += run
-                    per_over_tokens.append(str(run))
+            else:  # runs (1, 2, or 3)
+                score += runs
+                striker_stats["runs"] += runs
+                bowler_stats["runs"] += runs
+                per_over_tokens.append(str(runs))
 
-                    # change strike on odd runs
-                    if run % 2 == 1:
-                        striker_idx, non_striker_idx = non_striker_idx, striker_idx
+                # change strike on odd runs
+                if runs % 2 == 1:
+                    striker_idx, non_striker_idx = non_striker_idx, striker_idx
+
             # print ball-by-ball token if enabled — update same over line
             if ball_by_ball:
-                # for wicket, ensure token present
-                if outcome < pw and not per_over_tokens:
-                    per_over_tokens.append('W')
                 # overwrite same line for current over
                 print(f"Over {over_num+1}: {' '.join(per_over_tokens)}", end='\r', flush=True)
-                time.sleep(BALL_TIMER)
+                time.sleep(ball_timer if ball_timer is not None else BALL_TIMER)
             # if chasing and reached target, end innings immediately
             if target is not None and score >= target:
                 # ensure final over line printed properly
@@ -673,7 +665,7 @@ def print_scorecard(team_name, batting_team, score, wickets, batting_stats, bowl
     console.print()
 
 
-def simulate_match(teamA_name, teamB_name, ball_by_ball=False):
+def simulate_match(teamA_name, teamB_name, ball_by_ball=False, ball_timer=None, innings_timer=None, stage="league"):
     console = Console()
     
     # Rich match header
@@ -704,12 +696,14 @@ def simulate_match(teamA_name, teamB_name, ball_by_ball=False):
         batting_first_team, bowling_first_team, 
         ball_by_ball=ball_by_ball, 
         team_name=batting_first_name, 
-        bowling_team_name=bowling_first_name
+        bowling_team_name=bowling_first_name,
+        ball_timer=ball_timer,
+        innings_timer=innings_timer
     )
     print_scorecard(batting_first_name, batting_first_team, first_score, first_wk, first_bat, first_bowl, first_fall)
 
     if ball_by_ball:
-        time.sleep(INNINGS_TIMER)
+        time.sleep(innings_timer if innings_timer is not None else INNINGS_TIMER)
     
     # Second innings (chase). target = first_score + 1
     target = first_score + 1
@@ -718,7 +712,9 @@ def simulate_match(teamA_name, teamB_name, ball_by_ball=False):
         ball_by_ball=ball_by_ball, 
         target=target, 
         team_name=bowling_first_name, 
-        bowling_team_name=batting_first_name
+        bowling_team_name=batting_first_name,
+        ball_timer=ball_timer,
+        innings_timer=innings_timer
     )
     print_scorecard(bowling_first_name, bowling_first_team, second_score, second_wk, second_bat, second_bowl, second_fall)
 
@@ -730,107 +726,99 @@ def simulate_match(teamA_name, teamB_name, ball_by_ball=False):
     else:
         winner = "TIE"
 
-    choice = "y"
-    if choice != "n":
-        # compute margin string for result
-        if winner == batting_first_name:
-            margin = f"{first_score - second_score} runs" if first_score != second_score else ""
-        elif winner == bowling_first_name:
-            # wickets remaining is 10 - wickets lost by winner (second_wk)
-            wickets_remaining = 10 - second_wk
-            margin = f"{wickets_remaining} wickets" if wickets_remaining >= 0 else ""
-        else:
-            margin = ""
+    # compute margin string for result
+    if winner == batting_first_name:
+        margin = f"{first_score - second_score} runs" if first_score != second_score else ""
+    elif winner == bowling_first_name:
+        # wickets remaining is 10 - wickets lost by winner (second_wk)
+        wickets_remaining = 10 - second_wk
+        margin = f"{wickets_remaining} wickets" if wickets_remaining >= 0 else ""
+    else:
+        margin = ""
 
-        # Map toss-based results back to teamA/teamB for database and display
-        if batting_first_name == teamA_name:
-            A_score, B_score = first_score, second_score
-            A_wk, B_wk = first_wk, second_wk
-            A_bat, A_bowl = first_bat, first_bowl
-            B_bat, B_bowl = second_bat, second_bowl
-            A = batting_first_team
-            B = bowling_first_team
-        else:
-            A_score, B_score = second_score, first_score
-            A_wk, B_wk = second_wk, first_wk
-            A_bat, A_bowl = second_bat, second_bowl
-            B_bat, B_bowl = first_bat, first_bowl
-            A = bowling_first_team
-            B = batting_first_team
+    # Map toss-based results back to teamA/teamB for database and display
+    if batting_first_name == teamA_name:
+        A_score, B_score = first_score, second_score
+        A_wk, B_wk = first_wk, second_wk
+        A_bat, A_bowl = first_bat, first_bowl
+        B_bat, B_bowl = second_bat, second_bowl
+        A = batting_first_team
+        B = bowling_first_team
+    else:
+        A_score, B_score = second_score, first_score
+        A_wk, B_wk = second_wk, first_wk
+        A_bat, A_bowl = second_bat, second_bowl
+        B_bat, B_bowl = first_bat, first_bowl
+        A = bowling_first_team
+        B = batting_first_team
 
-        result = {"winner": winner, "by": margin, "A_score": A_score, "B_score": B_score}
+    result = {"winner": winner, "by": margin, "A_score": A_score, "B_score": B_score}
 
-        path = database.save_match_file(teamA_name, teamB_name, A_bat, A_bowl, B_bat, B_bowl, teamA_objs=A, teamB_objs=B, result=result, A_score=A_score, B_score=B_score)
-        database.update_players_from_match(teamA_name, A, A_bat, A_bowl)
-        database.update_players_from_match(teamB_name, B, B_bat, B_bowl)
+    path = database.save_match_file(teamA_name, teamB_name, A_bat, A_bowl, B_bat, B_bowl, teamA_objs=A, teamB_objs=B, result=result, A_score=A_score, B_score=B_score, stage=stage)
+    database.update_players_from_match(teamA_name, A, A_bat, A_bowl)
+    database.update_players_from_match(teamB_name, B, B_bat, B_bowl)
 
-        A_balls_faced = sum(s.get("balls", 0) for s in A_bat)
-        B_balls_faced = sum(s.get("balls", 0) for s in B_bat)
+    A_balls_faced = sum(s.get("balls", 0) for s in A_bat)
+    B_balls_faced = sum(s.get("balls", 0) for s in B_bat)
 
-        # If the chasing team finished the chase before 20 overs,
-        # project how many runs they would have scored in a full 20.0 overs
-        # using their current runs-per-ball rate and show that in the
-        # concise match summary. Both teams are displayed with (20.0).
-        display_A_score = A_score
-        display_B_score = B_score
-        total_balls = 20 * 6
-        
-        # Determine which team was chasing and project their score if finished early
-        if batting_first_name == teamA_name:
-            # teamB was chasing
-            chasing_balls = B_balls_faced
-            chasing_score = B_score
-            if B_score >= target and chasing_balls < total_balls and chasing_balls > 0:
-                runs_per_ball = chasing_score / chasing_balls
-                remaining_balls = total_balls - chasing_balls
-                projected_additional = runs_per_ball * remaining_balls
-                display_B_score = int(round(chasing_score + projected_additional))
-        else:
-            # teamA was chasing
-            chasing_balls = A_balls_faced
-            chasing_score = A_score
-            if A_score >= target and chasing_balls < total_balls and chasing_balls > 0:
-                runs_per_ball = chasing_score / chasing_balls
-                remaining_balls = total_balls - chasing_balls
-                projected_additional = runs_per_ball * remaining_balls
-                display_A_score = int(round(chasing_score + projected_additional))
+    # If the chasing team finished the chase before 20 overs,
+    # project how many runs they would have scored in a full 20.0 overs
+    # using their current runs-per-ball rate and show that in the
+    # concise match summary. Both teams are displayed with (20.0).
+    display_A_score = A_score
+    display_B_score = B_score
+    total_balls = 20 * 6
+    
+    # Determine which team was chasing and project their score if finished early
+    if batting_first_name == teamA_name:
+        # teamB was chasing
+        chasing_balls = B_balls_faced
+        chasing_score = B_score
+        if B_score >= target and chasing_balls < total_balls and chasing_balls > 0:
+            runs_per_ball = chasing_score / chasing_balls
+            remaining_balls = total_balls - chasing_balls
+            projected_additional = runs_per_ball * remaining_balls
+            display_B_score = int(round(chasing_score + projected_additional))
+    else:
+        # teamA was chasing
+        chasing_balls = A_balls_faced
+        chasing_score = A_score
+        if A_score >= target and chasing_balls < total_balls and chasing_balls > 0:
+            runs_per_ball = chasing_score / chasing_balls
+            remaining_balls = total_balls - chasing_balls
+            projected_additional = runs_per_ball * remaining_balls
+            display_A_score = int(round(chasing_score + projected_additional))
 
-        # Rich match result summary
-        console = Console()
-        
-        result_table = Table(title="📊 MATCH SUMMARY", show_header=True, 
-                           header_style="bold magenta", box=box.DOUBLE)
-        result_table.add_column("Team", style="cyan", width=20)
-        result_table.add_column("Score", justify="center", style="yellow")
-        result_table.add_column("Overs", justify="center", style="white")
-        
-        result_table.add_row(teamA_name, f"{display_A_score}/{A_wk}", "20.0")
-        result_table.add_row(teamB_name, f"{display_B_score}/{B_wk}", "20.0")
-        
-        console.print()
-        console.print(result_table)
-        
-        # Match result with winner highlighted
-        if winner == "TIE":
-            result_text = Text("🤝 MATCH TIED 🤝", style="bold yellow", justify="center")
-        else:
-            result_text = Text()
-            result_text.append("🏆 ", style="bold yellow")
-            result_text.append(winner, style="bold green")
-            result_text.append(" WON BY ", style="bold white")
-            result_text.append(margin.upper(), style="bold cyan")
-            result_text.append(" 🏆", style="bold yellow")
-        
-        console.print()
-        console.print(Panel(result_text, border_style="green", box=box.DOUBLE))
-        console.print()
+    # Rich match result summary
+    console = Console()
+    
+    result_table = Table(title="📊 MATCH SUMMARY", show_header=True, 
+                       header_style="bold magenta", box=box.DOUBLE)
+    result_table.add_column("Team", style="cyan", width=20)
+    result_table.add_column("Score", justify="center", style="yellow")
+    result_table.add_column("Overs", justify="center", style="white")
+    
+    result_table.add_row(teamA_name, f"{display_A_score}/{A_wk}", "20.0")
+    result_table.add_row(teamB_name, f"{display_B_score}/{B_wk}", "20.0")
+    
+    console.print()
+    console.print(result_table)
+    
+    # Match result with winner highlighted
+    if winner == "TIE":
+        result_text = Text("🤝 MATCH TIED 🤝", style="bold yellow", justify="center")
+    else:
+        result_text = Text()
+        result_text.append("🏆 ", style="bold yellow")
+        result_text.append(winner, style="bold green")
+        result_text.append(" WON BY ", style="bold white")
+        result_text.append(margin.upper(), style="bold cyan")
+        result_text.append(" 🏆", style="bold yellow")
+    
+    console.print()
+    console.print(Panel(result_text, border_style="green", box=box.DOUBLE))
+    console.print()
 
-        database.update_team_from_match(teamA_name, teamB_name, A_score, B_score, A_balls_faced, B_balls_faced, winner)
+    database.update_team_from_match(teamA_name, teamB_name, A_score, B_score, A_balls_faced, B_balls_faced, winner)
 
     return winner
-
-
-if __name__ == "__main__":
-    choose_profile()
-    simulate_match("KKR", "MI", False)
-    simulate_match("SRH", "MI", False)

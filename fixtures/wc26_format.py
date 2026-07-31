@@ -98,13 +98,14 @@ def print_group_table(group_name, standings, nrr_override=None):
     print("=" * 70)
 
 
-def simulate_wc26_format(selected_teams, playoff_ball_by_ball=False):
+def simulate_wc26_format(selected_teams, playoff_ball_by_ball=False, league_ball_by_ball=False):
     """
     Simulate a league with WC '26 format.
     
     Args:
         selected_teams: List of teams participating
         playoff_ball_by_ball: Whether to show ball-by-ball for playoff matches
+        league_ball_by_ball: Whether to show ball-by-ball for league/group matches (with zero timers)
     
     Returns:
         Champion team name
@@ -150,8 +151,10 @@ def simulate_wc26_format(selected_teams, playoff_ball_by_ball=False):
         fixtures = create_round_robin_fixtures(group_teams)
         
         for team_a, team_b in fixtures:
-            print(f"[Match {match_counter}/{total_group_matches}] {team_a} vs {team_b}: ", end="")
-            winner = simulate_match(team_a, team_b, False)
+            if league_ball_by_ball:
+                input(f"Press Enter to start Match {match_counter}: {team_a} vs {team_b}...")
+            print(f"[Match {match_counter}/{total_group_matches}] {team_a} vs {team_b}: ", end="" if not league_ball_by_ball else "\n")
+            winner = simulate_match(team_a, team_b, league_ball_by_ball, ball_timer=0, innings_timer=0)
             match_counter += 1
             
             # Update standings
@@ -255,8 +258,10 @@ def simulate_wc26_format(selected_teams, playoff_ball_by_ball=False):
         fixtures = create_round_robin_fixtures(super8_teams)
         
         for team_a, team_b in fixtures:
-            print(f"[Match {match_counter}/{total_super8_matches}] {team_a} vs {team_b}: ", end="")
-            winner = simulate_match(team_a, team_b, False)
+            if league_ball_by_ball:
+                input(f"Press Enter to start Match {match_counter}: {team_a} vs {team_b}...")
+            print(f"[Match {match_counter}/{total_super8_matches}] {team_a} vs {team_b}: ", end="" if not league_ball_by_ball else "\n")
+            winner = simulate_match(team_a, team_b, league_ball_by_ball, ball_timer=0, innings_timer=0)
             match_counter += 1
             
             # Update standings
@@ -332,11 +337,11 @@ def simulate_wc26_format(selected_teams, playoff_ball_by_ball=False):
     
     print(f"\nSemi-Final 1: {p1} (P1) vs {q2} (Q2)")
     input("Press Enter to simulate Semi-Final 1...")
-    semi1_winner = simulate_match(p1, q2, playoff_ball_by_ball)
+    semi1_winner = simulate_match(p1, q2, playoff_ball_by_ball, stage="playoff")
     
     print(f"\nSemi-Final 2: {q1} (Q1) vs {p2} (P2)")
     input("Press Enter to simulate Semi-Final 2...")
-    semi2_winner = simulate_match(q1, p2, playoff_ball_by_ball)
+    semi2_winner = simulate_match(q1, p2, playoff_ball_by_ball, stage="playoff")
     
     # ========== FINAL ==========
     print("\n" + "=" * 70)
@@ -345,7 +350,7 @@ def simulate_wc26_format(selected_teams, playoff_ball_by_ball=False):
     
     print(f"\n{semi1_winner} vs {semi2_winner}")
     input("Press Enter to simulate the Final...")
-    champion = simulate_match(semi1_winner, semi2_winner, playoff_ball_by_ball)
+    champion = simulate_match(semi1_winner, semi2_winner, playoff_ball_by_ball, stage="playoff")
     
     # ========== RESULTS ==========
     print(f"\n{'='*70}")

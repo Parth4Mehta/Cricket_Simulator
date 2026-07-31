@@ -132,40 +132,56 @@ def simulate_league(format_id=None, selected_teams=None):
     if selected_teams is None:
         selected_teams = select_teams()
     
-    # Ask user if they want ball-by-ball for playoffs
+    # Ask user if they want ball-by-ball for league matches
     print("\n" + "="*60)
-    print("Playoff Configuration")
+    print("Simulation Configuration")
     print("="*60)
+    league_ball_by_ball_choice = input("Do you want ball-by-ball simulation for league matches? (y/n, default: n): ").strip().lower()
+    league_ball_by_ball = (league_ball_by_ball_choice == "y")
+    
+    # Ask user if they want ball-by-ball for playoffs
     playoff_ball_by_ball_choice = input("Do you want ball-by-ball simulation for playoff matches? (y/n, default: n): ").strip().lower()
     playoff_ball_by_ball = (playoff_ball_by_ball_choice == "y")
     
     # Get the appropriate format function and run it
     format_function = get_format_function(format_id)
-    champion = format_function(selected_teams, playoff_ball_by_ball)
-    
+    champion = format_function(selected_teams, playoff_ball_by_ball, league_ball_by_ball)
+
+    # Offer to archive into the historical database.
+    _prompt_archive(champion)
+
     return champion
 
 
-if __name__ == "__main__":
-    from match_simulator import choose_profile_default
-    
-    # Load default difficulty profile
-    choose_profile_default()
-    
-    database.print_caps_and_table()
-    clear_database()
-    season_wins = {}
-    
-    # Simulate one season (change range to simulate multiple)
-    for i in range(1):
-        winner = simulate_league()
-        print(f"Season {i+1} completed.")
-        season_wins[winner] = season_wins.get(winner, 0) + 1
-    
-    print("\n" + "="*60)
-    print("SEASON SUMMARY")
-    print("="*60)
-    print("Number of seasons won by each team:")
-    for team, wins in sorted(season_wins.items(), key=lambda x: -x[1]):
-        print(f"  {team}: {wins} season(s)")
+def _prompt_archive(champion):
+    """Ask the user whether to archive the just-completed season into the
+    historical database. Safe to skip; the user can also clear via menu 5
+    without archiving if they don't want to keep this season.
+    """
+    print("\n" + "=" * 60)
+    print("ARCHIVE THIS SEASON?")
+    print("=" * 60)
+    print("This will copy the current points table, all matches, and all")
+    print("batting/bowling cards into the historical database as a new")
+    print("season. The current data stays put (use menu option 5 to clear).")
+    print()
+    answer = input("Add this season to historical database? (y/n): ").strip().lower()
+    if answer != "y":
+        print("Skipped archiving.")
+        return
+
+    try:
+        import historical
+        season_id = historical.archive_current_season(champion=champion)
+        if season_id is None:
+            print("Nothing to archive (no current matches found).")
+        else:
+            print(f"\nArchived as season_id={season_id}. Champion: {champion or '-'}")
+            # Auto-clear current season immediately on successful archive so
+            # the user is ready to start a fresh league without going through
+            # menu option 5 manually.
+            database.clear_database(silent=True)
+            print("Current season cleared.")
+    except Exception as e:
+        print(f"Archive failed: {e}")
     print("="*60)
