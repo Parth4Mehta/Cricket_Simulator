@@ -20,8 +20,8 @@ BATSMAN_FOUR_BOOST = 0.016
 BOWLER_WICKET_BOOST = 0.006
 
 # Global timer settings for ball-by-ball simulation
-BALL_TIMER = 0.7  # seconds between balls (default)
-INNINGS_TIMER = 20  # seconds between innings (default)
+BALL_TIMER = 0.1  # seconds between balls (default)
+INNINGS_TIMER = 0.1  # seconds between innings (default)
 
 
 def load_profile(profile_name):
