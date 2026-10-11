@@ -195,6 +195,15 @@ source venv/bin/activate
 pip install -e ".[dev,rich]"
 ```
 
+Enable the repository's Git hooks so commits and pushes are blocked when tests
+fail:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+This is a one-time setup for each clone.
+
 ### 2. Code Style
 
 We follow **PEP 8**. Format code with black:
@@ -210,9 +219,9 @@ flake8 *.py
 
 ### 3. Testing
 
-Run interactive tests:
+Run the automated tests:
 ```bash
-python main.py    # Test all functionality
+python -m pytest -v tests/
 ```
 
 ### 4. Making Changes
