@@ -10,14 +10,14 @@ from rich.panel import Panel
 from rich.text import Text
 from rich import box
 
-# Global game coefficients - initialized with default profile
-FOUR_COEFF = 0.02
-SIX_COEFF = 0.01
-WICKET_COEFF = 0.013
-DOT_BALL_COEFF = 0.45
-BATSMAN_SIX_BOOST = 0.008
-BATSMAN_FOUR_BOOST = 0.016
-BOWLER_WICKET_BOOST = 0.006
+# Global game coefficients - initialized with the balanced default profile
+FOUR_COEFF = 0.01
+SIX_COEFF = 0.005
+WICKET_COEFF = 0.006
+DOT_BALL_COEFF = 0.30
+BATSMAN_SIX_BOOST = 0.004
+BATSMAN_FOUR_BOOST = 0.008
+BOWLER_WICKET_BOOST = 0.0035
 
 # Global timer settings for ball-by-ball simulation
 BALL_TIMER = 0.1  # seconds between balls (default)
