@@ -9,12 +9,12 @@ def get_teams():
             Player("V Tilak", 8.5, 0.9),
             Player("Y Suryakumar", 8.8, 1.2),
             Player("W Jacks", 7.5, 2.8),
-            Player("P Hardik", 8.3, 7.4),
-            Player("A Ghazanfar", 3.6, 7.6),
-            Player("S Thakur", 3.2, 7.5),
-            Player("D Chahar", 2.3, 7.8),
-            Player("T Boult", 1.1, 8.5),
-            Player("J Bumrah", 1.0, 9.5),
+            Player("P Hardik", 8.3, 7.4), # F
+            Player("A Ghazanfar", 3.6, 7.6), # D
+            Player("S Thakur", 3.2, 7.5), # E
+            Player("D Chahar", 2.3, 7.8), # C
+            Player("T Boult", 1.1, 8.5), # B
+            Player("J Bumrah", 1.0, 9.5), # A
         ],
 
         "CSK": [
@@ -625,7 +625,7 @@ def get_teams():
 # Example: "ABCDABCDABCDABCDABCD" - rotates through top 4 bowlers evenly
 BOWLING_ORDERS = {
     # IPL Teams
-    "MI": "ABABCDECDECDECDEABAB",
+    "MI": "CACBCACDFDEBDFDEABAB",
     "CSK": "ABABCDECDECDECDEABAB",
     "SRH": "ABABCDECDECDECDEABAB",
     "RCB": "ABABCDECDECDECDEABAB",
