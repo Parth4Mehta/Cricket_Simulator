@@ -22,13 +22,13 @@ def get_teams():
             Player("S Samson", 8.7, 1.0),
             Player("R Gaikwad", 8.5, 0.9),
             Player("D Brevis", 8.4, 2.1),
-            Player("S Dube", 8.1, 5.2),
-            Player("P Veer", 5.8, 5.5),
+            Player("S Dube", 8.1, 5.2), # F
+            Player("P Veer", 5.8, 5.5), # E
             Player("M Dhoni", 7.4, 0.9),
-            Player("N Ellis", 2.4, 7.8),
-            Player("M Henry", 1.6, 7.5),
-            Player("A Noor", 1.4, 8.9),
-            Player("A Khaleel", 1.0, 7.6),
+            Player("N Ellis", 2.4, 7.8), # B
+            Player("M Henry", 1.6, 7.5), # D
+            Player("A Noor", 1.4, 8.9), # A
+            Player("A Khaleel", 1.0, 7.6), # C
         ],
 
         "SRH": [
@@ -36,13 +36,13 @@ def get_teams():
             Player("T Head", 8.5, 3.1),
             Player("I Kishan", 8.6, 1.0),
             Player("H Klaasen", 8.9, 1.0),
-            Player("N Reddy", 7.7, 5.2),
+            Player("N Reddy", 7.7, 5.2), # F
             Player("L Livingstone", 6.9, 1.0),
-            Player("D Harsh", 5.2, 5.9),
-            Player("P Cummins", 3.0, 8.4),
-            Player("P Harshal", 2.5, 7.7),
-            Player("Z Ansari", 1.6, 7.3),
-            Player("J Unadkat", 1.3, 7.4),
+            Player("D Harsh", 5.2, 5.9), # E
+            Player("P Cummins", 3.0, 8.4), # A
+            Player("P Harshal", 2.5, 7.7), # B
+            Player("Z Ansari", 1.6, 7.3), # D
+            Player("J Unadkat", 1.3, 7.4), # C
         ],
 
         "RCB": [
@@ -52,11 +52,11 @@ def get_teams():
             Player("R Patidar", 8.3, 1.0),
             Player("S Jitesh", 7.7, 1.0),
             Player("T David", 7.8, 3.9),
-            Player("P Krunal", 5.1, 8.2),
-            Player("K Bhuvneshwar", 3.2, 9.0),
-            Player("J Hazlewood", 1.6, 9.0),
-            Player("S Suyash", 1.2, 7.4),
-            Player("Y Dayal", 1.0, 7.2),
+            Player("P Krunal", 5.1, 8.2), # C
+            Player("K Bhuvneshwar", 3.2, 9.0), # B
+            Player("J Hazlewood", 1.6, 9.0), # A
+            Player("S Suyash", 1.2, 7.4), # D
+            Player("Y Dayal", 1.0, 7.2), # E
         ],
 
         "RR": [
@@ -65,12 +65,12 @@ def get_teams():
             Player("S Hetmeyer", 7.5, 1.0),
             Player("R Parag", 7.8, 3.8),
             Player("D Jurel", 7.6, 1.0),
-            Player("R Jadeja", 7.0, 7.7),
-            Player("D Ferreira", 6.8, 5.1),
-            Player("S Curran", 4.6, 7.3),
-            Player("J Archer", 2.2, 9.2),
-            Player("S Sandeep", 1.0, 7.8),
-            Player("T Deshpande", 1.0, 7.6),
+            Player("R Jadeja", 7.0, 7.7), # C
+            Player("D Ferreira", 6.8, 5.1), # F
+            Player("S Curran", 4.6, 7.3), # E
+            Player("J Archer", 2.2, 9.2), # A
+            Player("S Sandeep", 1.0, 7.8), # B
+            Player("T Deshpande", 1.0, 7.6), # D
         ],
 
         "PBKS": [
@@ -78,55 +78,55 @@ def get_teams():
             Player("P Arya", 8.0, 0.9),
             Player("S Iyer", 9.3, 2.0),
             Player("N Wadhera", 7.7, 2.0),
-            Player("C Connolly", 7.6, 5.0),
+            Player("C Connolly", 7.6, 5.0), # F
             Player("S Shashank", 7.8, 1.0),
-            Player("M Stoinis", 6.1, 5.6),
-            Player("M Jansen", 5.5, 7.5),
-            Player("H Brar", 2.6, 7.6),
-            Player("S Arshdeep", 1.0, 9.0),
-            Player("Y Chahal", 1.0, 8.7),
+            Player("M Stoinis", 6.1, 5.6), # E
+            Player("M Jansen", 5.5, 7.5), # D
+            Player("H Brar", 2.6, 7.6), # C
+            Player("S Arshdeep", 1.0, 9.0), # A
+            Player("Y Chahal", 1.0, 8.7), # B
         ],
 
         "LSG": [
-            Player("M Marsh", 8.2, 6.4),
+            Player("M Marsh", 8.2, 6.4), # F
             Player("A Markram", 8.2, 4.0),
             Player("N Pooran", 8.7, 1.0),
             Player("R Pant", 7.9, 1.0),
             Player("A Badoni", 7.5, 2.0),
             Player("A Samad", 7.1, 2.0),
-            Player("W Hasaranga", 5.2, 7.5),
-            Player("R Digvesh", 2.0, 7.9),
-            Player("Y Mayank", 1.0, 7.6),
-            Player("K Avesh", 1.0, 7.7),
-            Player("M Shami", 1.0, 7.9),
+            Player("W Hasaranga", 5.2, 7.5), # E
+            Player("R Digvesh", 2.0, 7.9), # B
+            Player("Y Mayank", 1.0, 7.6), # D
+            Player("K Avesh", 1.0, 7.7), # C
+            Player("M Shami", 1.0, 7.9), # A
         ],
 
         "KKR": [
-            Player("S Narine", 7.1, 9.2),
+            Player("S Narine", 7.1, 9.2), # A
             Player("F Allen", 7.5, 1.0),
             Player("A Rahane", 7.7, 1.0),
             Player("A Raghuvanshi", 8.2, 1.0),
             Player("C Green", 7.8, 3.9),
             Player("S Rinku", 8.2, 1.0),
             Player("S Ramandeep", 7.6, 4.0),
-            Player("H Rana", 4.1, 8.0),
-            Player("V Arora", 1.0, 7.7),
-            Player("M Pathirana", 1.0, 8.4),
-            Player("V Chakravarthy", 1.0, 9.1),
+            Player("H Rana", 4.1, 8.0), # D
+            Player("V Arora", 1.0, 7.7), # E
+            Player("M Pathirana", 1.0, 8.4), # C
+            Player("V Chakravarthy", 1.0, 9.1), # B
         ],
 
         "GT": [
             Player("S Sudarshan", 9.4, 1.0),
             Player("S Gill", 9.3, 1.0),
             Player("J Buttler", 9.1, 1.0),
-            Player("W Sundar", 6.8, 7.3),
+            Player("W Sundar", 6.8, 7.3), # E
             Player("K Shahrukh", 7.1, 3.0),
             Player("G Phillips", 7.2, 4.0),
-            Player("R Tewatia", 6.4, 6.0),
-            Player("K Rashid", 5.1, 9.4),
-            Player("K Rabada", 2.2, 8.7),
-            Player("K Prasidh", 1.0, 8.0),
-            Player("M Siraj", 1.0, 8.3),
+            Player("R Tewatia", 6.4, 6.0), # F
+            Player("K Rashid", 5.1, 9.4), # A
+            Player("K Rabada", 2.2, 8.7), # B
+            Player("K Prasidh", 1.0, 8.0), # D
+            Player("M Siraj", 1.0, 8.3), # C
         ],
 
         "DC": [
@@ -136,11 +136,11 @@ def get_teams():
             Player("T Stubbs", 8.5, 3.0),
             Player("S Ashutosh", 7.6, 2.0),
             Player("D Miller", 8.2, 5.0),
-            Player("P Axar", 5.9, 7.9),
-            Player("N Auqib", 3.6, 7.0),
-            Player("M Starc", 3.3, 8.5),
-            Player("Y Kuldeep", 2.8, 8.9),
-            Player("T Natarajan", 1.0, 7.8),
+            Player("P Axar", 5.9, 7.9), # C
+            Player("N Auqib", 3.6, 7.0), # E
+            Player("M Starc", 3.3, 8.5), # B
+            Player("Y Kuldeep", 2.8, 8.9), # A
+            Player("T Natarajan", 1.0, 7.8), # D
         ],
         # IPL 2016 Teams
         "MI16": [
@@ -626,10 +626,10 @@ def get_teams():
 BOWLING_ORDERS = {
     # IPL Teams
     "MI": "CACBCACDFDEBDFDEABAB",
-    "CSK": "ABABCDECDECDECDEABAB",
-    "SRH": "ABABCDECDECDECDEABAB",
-    "RCB": "ABABCDECDECDECDEABAB",
-    "RR": "ABABCDECDECDECDEABAB",
+    "CSK": "BDCBDCAEAFDAEAEDBCBC",
+    "SRH": "ABACACDEDEBDFDECBCBA",
+    "RCB": "BABACEDECDCDCEDEBABA",
+    "RR": "DBADBACECECDCDEBEABAT",
     "PBKS": "ABABCDECDECDECDEABAB",
     "LSG": "ABABCDECDECDECDEABAB",
     "KKR": "ABABCDECDECDECDEABAB",
