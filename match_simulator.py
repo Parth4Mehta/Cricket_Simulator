@@ -820,5 +820,6 @@ def simulate_match(teamA_name, teamB_name, ball_by_ball=False, ball_timer=None, 
     console.print()
 
     database.update_team_from_match(teamA_name, teamB_name, A_score, B_score, A_balls_faced, B_balls_faced, winner)
-
+    if winner == "TIE" and stage == "playoff":
+        return random.choice([teamA_name, teamB_name])  
     return winner
