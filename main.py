@@ -10,6 +10,7 @@ from league_simulator import simulate_league, select_teams
 from database import print_caps_and_table, clear_database, get_points_table_sorted
 from teams import get_teams
 from venues import get_home_venue, get_pitch
+from captain import LiveCaptain
 
 
 def print_banner():
@@ -92,7 +93,10 @@ Venue:")
         venue_choice = input("Select venue (1-3, default: 3): ").strip()
         venue = {"1": get_home_venue(team1), "2": get_home_venue(team2)}.get(venue_choice)
 
-        simulate_match(team1, team2, ball_by_ball=ball_by_ball, venue=venue)
+        live_choice = input("Live choices? You pick openers, next batters and every over's bowler for both sides (y/n, default: n): ").strip().lower()
+        captain = LiveCaptain() if live_choice == "y" else None
+
+        simulate_match(team1, team2, ball_by_ball=ball_by_ball, venue=venue, captain=captain)
     except ValueError:
         print("Invalid input!")
     except KeyboardInterrupt:

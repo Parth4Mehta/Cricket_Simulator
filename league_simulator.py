@@ -5,6 +5,7 @@ Module to handle league simulation with different tournament formats.
 """
 
 from teams import get_teams
+from captain import LiveCaptain
 from database import clear_database
 import database
 from fixtures import get_available_formats, get_format_function
@@ -143,9 +144,12 @@ def simulate_league(format_id=None, selected_teams=None):
     playoff_ball_by_ball_choice = input("Do you want ball-by-ball simulation for playoff matches? (y/n, default: n): ").strip().lower()
     playoff_ball_by_ball = (playoff_ball_by_ball_choice == "y")
     
+    live_choice = input("Live choices? You pick openers, next batters and every over's bowler for both sides in every match (y/n, default: n): ").strip().lower()
+    captain = LiveCaptain() if live_choice == "y" else None
+
     # Get the appropriate format function and run it
     format_function = get_format_function(format_id)
-    champion = format_function(selected_teams, playoff_ball_by_ball, league_ball_by_ball)
+    champion = format_function(selected_teams, playoff_ball_by_ball, league_ball_by_ball, captain=captain)
 
     # Offer to archive into the historical database.
     _prompt_archive(champion)

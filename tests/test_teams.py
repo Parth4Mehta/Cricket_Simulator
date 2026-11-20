@@ -43,6 +43,8 @@ def test_bowling_order_is_legal(team_name, order):
     assert set(order) <= set("ABCDEFGHIJK")
     over_limit = {k: v for k, v in Counter(order).items() if v > 4}
     assert not over_limit, f"bowlers over 4 overs: {over_limit}"
+    back_to_back = [i + 1 for i, (a, b) in enumerate(zip(order, order[1:])) if a == b]
+    assert not back_to_back, f"same bowler in consecutive overs at over(s) {back_to_back}"
 
 
 def test_bowler_ranking_sorts_by_skill_then_name():

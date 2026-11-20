@@ -210,7 +210,7 @@ def choose_profile_default():
     load_profile_default()
 
 
-def coin_toss(teamA_name, teamB_name):
+def coin_toss(teamA_name, teamB_name, captain=None):
     """
     Simulate a coin toss to determine which team bats first.
     
@@ -227,8 +227,8 @@ def coin_toss(teamA_name, teamB_name):
     toss_winner = random.choice([teamA_name, teamB_name])
     toss_loser = teamB_name if toss_winner == teamA_name else teamA_name
     
-    # 50/50 bat or bowl decision
-    decision = random.choice(["BAT", "BOWL"])
+    # 50/50 bat or bowl decision, unless the user is making live choices
+    decision = captain.choose_toss(toss_winner) if captain else random.choice(["BAT", "BOWL"])
     
     if decision == "BAT":
         batting_first = toss_winner
@@ -327,13 +327,29 @@ def generate_bowling_order(bowling_team, custom_order=None):
     return order  # 20 overs
 
 
-def simulate_innings(batting_team, bowling_team, ball_by_ball=False, target=None, total_overs=20, team_name=None, bowling_team_name=None, ball_timer=None, innings_timer=None, pitch=None):
+def simulate_innings(batting_team, bowling_team, ball_by_ball=False, target=None, total_overs=20, team_name=None, bowling_team_name=None, ball_timer=None, innings_timer=None, pitch=None, captain=None):
+    """Simulate one innings.
+
+    captain: optional captain.LiveCaptain making live choices (openers, next
+    batter, each over's bowler). When it picks batters, `batting_team` is
+    reordered in place so the list always matches the actual batting order.
+    The bowling rules (4 overs max, no consecutive overs) are enforced here
+    whatever the captain returns. Without a captain nothing is prompted and
+    behaviour is unchanged.
+    """
     # Get custom bowling order for the bowling team, if defined
     custom_order = get_bowling_order(bowling_team_name) if bowling_team_name else None
     bowling_order = generate_bowling_order(bowling_team, custom_order)
 
     score = 0
     wickets = 0
+
+    if captain:
+        captain.start_innings()
+        o1, o2 = captain.choose_openers(team_name, batting_team)
+        if o1 != o2 and {o1, o2} <= set(range(len(batting_team))):
+            openers = [batting_team[o1], batting_team[o2]]
+            batting_team[:] = openers + [p for p in batting_team if p not in openers]
 
     # striker and non-striker indices and next batsman to come
     striker_idx = 0
@@ -471,7 +487,33 @@ def simulate_innings(batting_team, bowling_team, ball_by_ball=False, target=None
             console.print(runs_req_text)
             console.print()
             
+    overs_by_bowler = {b.name: 0 for b in bowling_team}
+    previous_bowler = None
+    last_over_tokens = []
+
+    def _situation():
+        striker_p, non_striker_p = batting_team[striker_idx], batting_team[non_striker_idx]
+        s_stats, n_stats = batting_stats[striker_idx], batting_stats[non_striker_idx]
+        text = f"{team_name} {score}/{wickets} ({balls_bowled // 6}.{balls_bowled % 6} ov)"
+        if target is not None:
+            text += f" | need {max(0, target - score)} from {total_overs * 6 - balls_bowled}"
+        text += (f" | {striker_p.name} {s_stats['runs']}({s_stats['balls']}),"
+                 f" {non_striker_p.name} {n_stats['runs']}({n_stats['balls']})")
+        if last_over_tokens:
+            text += f" | last over: {' '.join(last_over_tokens)}"
+        return text
+
     for bowler_idx, bowler in enumerate(bowling_order):
+        if captain:
+            allowed = [b for b in bowling_team
+                       if overs_by_bowler[b.name] < 4 and b is not previous_bowler]
+            default = bowler if bowler in allowed else max(allowed, key=lambda b: b.bowling)
+            choice = captain.choose_bowler(
+                bowling_team_name, bowler_idx, get_bowler_ranking(bowling_team), allowed, default,
+                {b.name: 4 - overs_by_bowler[b.name] for b in bowling_team}, _situation())
+            bowler = choice if choice in allowed else default
+        overs_by_bowler[bowler.name] += 1
+        previous_bowler = bowler
         bowler_stats = bowling_stats[bowler.name]
 
         over_num = bowler_idx  # 0-based
@@ -504,11 +546,20 @@ def simulate_innings(batting_team, bowling_team, ball_by_ball=False, target=None
                 wickets += 1
                 bowler_stats["wickets"] += 1
                 striker_stats["dismissal"] = generate_dismissal(bowler, bowling_team, striker.name)
-                fall_of_wickets.append((score, striker_idx + 1))
+                fall_of_wickets.append((score, wickets))
                 per_over_tokens.append('W')
 
                 # new batsman comes to striker's end (if available)
                 if next_batsman < len(batting_team):
+                    if captain and balls_bowled < total_overs * 6:
+                        candidates = list(range(next_batsman, len(batting_team)))
+                        pick = captain.choose_next_batter(
+                            team_name, batting_team, candidates,
+                            f"{striker.name} out. {team_name} {score}/{wickets} ({balls_bowled // 6}.{balls_bowled % 6} ov)")
+                        if pick in candidates and pick != next_batsman:
+                            # move the chosen batter into the next slot (not-yet-batted rows are all zero)
+                            batting_team[pick], batting_team[next_batsman] = batting_team[next_batsman], batting_team[pick]
+                            batting_stats[pick], batting_stats[next_batsman] = batting_stats[next_batsman], batting_stats[pick]
                     striker_idx = next_batsman
                     next_batsman += 1
                 else:
@@ -556,6 +607,7 @@ def simulate_innings(batting_team, bowling_team, ball_by_ball=False, target=None
                     _print_over_summary(per_over_tokens, over_num, bowler, bowler_stats, balls_bowled, striker_idx, non_striker_idx)
                 return score, wickets, batting_stats, bowling_stats, fall_of_wickets
         # end of over: update overs and swap strike
+        last_over_tokens = per_over_tokens
         bowler_stats["overs"] = bowler_stats["balls"] // 6
         # print final over summary if ball_by_ball (ensure full over line)
         if ball_by_ball:
@@ -671,8 +723,9 @@ def print_scorecard(team_name, batting_team, score, wickets, batting_stats, bowl
     console.print()
 
 
-def simulate_match(teamA_name, teamB_name, ball_by_ball=False, ball_timer=None, innings_timer=None, stage="league", venue=None):
-    """Play one T20 match. `venue` is a ground from venues.VENUES; None picks a random (neutral) one."""
+def simulate_match(teamA_name, teamB_name, ball_by_ball=False, ball_timer=None, innings_timer=None, stage="league", venue=None, captain=None):
+    """Play one T20 match. `venue` is a ground from venues.VENUES; None picks a random (neutral) one.
+    `captain` (captain.LiveCaptain) makes live choices for both sides; None = fully automatic."""
     console = Console()
     
     # Rich match header
@@ -700,7 +753,7 @@ def simulate_match(teamA_name, teamB_name, ball_by_ball=False, ball_timer=None, 
     console.print()
 
     # Coin toss to determine batting order
-    batting_first_name, bowling_first_name, toss_winner, decision = coin_toss(teamA_name, teamB_name)
+    batting_first_name, bowling_first_name, toss_winner, decision = coin_toss(teamA_name, teamB_name, captain)
     
     batting_first_team = teams[batting_first_name]
     bowling_first_team = teams[bowling_first_name]
@@ -713,7 +766,8 @@ def simulate_match(teamA_name, teamB_name, ball_by_ball=False, ball_timer=None, 
         bowling_team_name=bowling_first_name,
         ball_timer=ball_timer,
         innings_timer=innings_timer,
-        pitch=pitch
+        pitch=pitch,
+        captain=captain
     )
     print_scorecard(batting_first_name, batting_first_team, first_score, first_wk, first_bat, first_bowl, first_fall)
 
@@ -730,7 +784,8 @@ def simulate_match(teamA_name, teamB_name, ball_by_ball=False, ball_timer=None, 
         bowling_team_name=batting_first_name,
         ball_timer=ball_timer,
         innings_timer=innings_timer,
-        pitch=pitch
+        pitch=pitch,
+        captain=captain
     )
     print_scorecard(bowling_first_name, bowling_first_team, second_score, second_wk, second_bat, second_bowl, second_fall)
 
