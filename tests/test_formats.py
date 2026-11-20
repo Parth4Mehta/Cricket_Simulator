@@ -26,6 +26,15 @@ def test_format_runs_end_to_end(fmt, rows):
     assert champion in teams
     assert rows("SELECT COUNT(*) FROM matches")[0][0] == expected_matches
     assert rows("SELECT COUNT(*) FROM matches WHERE stage = 'playoff'")[0][0] > 0
+    assert rows("SELECT COUNT(*) FROM matches WHERE venue IS NULL OR pitch IS NULL")[0][0] == 0
+
+
+def test_round_robin_league_games_are_at_home_ground(rows):
+    from venues import get_home_venue
+    fmt = next(f for f in TOURNAMENT_FORMATS.values() if f["name"] == "Double Round-Robin + Playoffs")
+    fmt["function"](["MI", "CSK", "RCB"], playoff_ball_by_ball=False, league_ball_by_ball=False)
+    league = rows("SELECT team_a, venue FROM matches WHERE stage = 'league'")
+    assert league and all(r["venue"] == get_home_venue(r["team_a"]) for r in league)
 
 
 @pytest.mark.parametrize("n_teams", [8, 12, 16])

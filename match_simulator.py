@@ -2,8 +2,9 @@ import random
 import time
 from teams import get_teams, get_bowling_order, get_bowler_ranking, get_player
 import database
-from config_manager import get_profile, list_profiles, get_default_profile, update_advanced_profile, reset_advanced_profile, get_bowler_fatigue_settings
-from probability import calculate_effective_bowling, calculate_ball_probabilities, determine_ball_outcome
+from config_manager import get_profile, list_profiles, get_default_profile, update_advanced_profile, reset_advanced_profile, get_bowler_fatigue_settings, get_pitch_settings
+from probability import calculate_effective_bowling, calculate_ball_probabilities, determine_ball_outcome, pitch_bowling_bonus
+from venues import get_pitch, random_venue
 from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel
@@ -326,7 +327,7 @@ def generate_bowling_order(bowling_team, custom_order=None):
     return order  # 20 overs
 
 
-def simulate_innings(batting_team, bowling_team, ball_by_ball=False, target=None, total_overs=20, team_name=None, bowling_team_name=None, ball_timer=None, innings_timer=None):
+def simulate_innings(batting_team, bowling_team, ball_by_ball=False, target=None, total_overs=20, team_name=None, bowling_team_name=None, ball_timer=None, innings_timer=None, pitch=None):
     # Get custom bowling order for the bowling team, if defined
     custom_order = get_bowling_order(bowling_team_name) if bowling_team_name else None
     bowling_order = generate_bowling_order(bowling_team, custom_order)
@@ -490,10 +491,10 @@ def simulate_innings(batting_team, bowling_team, ball_by_ball=False, target=None
             overs_bowled_by_bowler = bowler_stats["overs"]
             effective_bowling = calculate_effective_bowling(
                 bowler.bowling, BOWLER_UP_VALUE, BOWLER_FATIGUE_RATE, overs_bowled_by_bowler
-            )
+            ) + pitch_bowling_bonus(bowler.style, pitch)
 
             p4, p6, pw, pdot = calculate_ball_probabilities(
-                striker.batting, effective_bowling, over_num, total_overs, coefficients
+                striker.batting, effective_bowling, over_num, total_overs, coefficients, pitch
             )
 
             striker_stats["balls"] += 1
@@ -670,7 +671,8 @@ def print_scorecard(team_name, batting_team, score, wickets, batting_stats, bowl
     console.print()
 
 
-def simulate_match(teamA_name, teamB_name, ball_by_ball=False, ball_timer=None, innings_timer=None, stage="league"):
+def simulate_match(teamA_name, teamB_name, ball_by_ball=False, ball_timer=None, innings_timer=None, stage="league", venue=None):
+    """Play one T20 match. `venue` is a ground from venues.VENUES; None picks a random (neutral) one."""
     console = Console()
     
     # Rich match header
@@ -690,6 +692,13 @@ def simulate_match(teamA_name, teamB_name, ball_by_ball=False, ball_timer=None, 
     if teamA_name not in teams or teamB_name not in teams:
         raise ValueError("Team names not found in teams.py")
 
+    if venue is None:
+        venue = random_venue()
+    pitch_type = get_pitch(venue)
+    pitch = get_pitch_settings(pitch_type)
+    console.print(f"[bold]🏟  {venue}[/bold]  [dim]·[/dim]  [yellow]{pitch.get('label', pitch_type)}[/yellow] pitch")
+    console.print()
+
     # Coin toss to determine batting order
     batting_first_name, bowling_first_name, toss_winner, decision = coin_toss(teamA_name, teamB_name)
     
@@ -703,7 +712,8 @@ def simulate_match(teamA_name, teamB_name, ball_by_ball=False, ball_timer=None, 
         team_name=batting_first_name, 
         bowling_team_name=bowling_first_name,
         ball_timer=ball_timer,
-        innings_timer=innings_timer
+        innings_timer=innings_timer,
+        pitch=pitch
     )
     print_scorecard(batting_first_name, batting_first_team, first_score, first_wk, first_bat, first_bowl, first_fall)
 
@@ -719,7 +729,8 @@ def simulate_match(teamA_name, teamB_name, ball_by_ball=False, ball_timer=None, 
         team_name=bowling_first_name, 
         bowling_team_name=batting_first_name,
         ball_timer=ball_timer,
-        innings_timer=innings_timer
+        innings_timer=innings_timer,
+        pitch=pitch
     )
     print_scorecard(bowling_first_name, bowling_first_team, second_score, second_wk, second_bat, second_bowl, second_fall)
 
@@ -759,7 +770,7 @@ def simulate_match(teamA_name, teamB_name, ball_by_ball=False, ball_timer=None, 
 
     result = {"winner": winner, "by": margin, "A_score": A_score, "B_score": B_score}
 
-    path = database.save_match_file(teamA_name, teamB_name, A_bat, A_bowl, B_bat, B_bowl, teamA_objs=A, teamB_objs=B, result=result, A_score=A_score, B_score=B_score, stage=stage)
+    path = database.save_match_file(teamA_name, teamB_name, A_bat, A_bowl, B_bat, B_bowl, teamA_objs=A, teamB_objs=B, result=result, A_score=A_score, B_score=B_score, stage=stage, venue=venue, pitch=pitch_type)
     database.update_players_from_match(teamA_name, A, A_bat, A_bowl)
     database.update_players_from_match(teamB_name, B, B_bat, B_bowl)
 

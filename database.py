@@ -127,7 +127,8 @@ def save_teams(teams):
 
 def save_match_file(teamA_name, teamB_name, A_bat, A_bowl, B_bat, B_bowl,
                     teamA_objs=None, teamB_objs=None, result=None,
-                    A_score=None, B_score=None, stage="league"):
+                    A_score=None, B_score=None, stage="league",
+                    venue=None, pitch=None):
     """Persist one match (header + batting + bowling) into SQLite.
 
     The function name is kept for API compatibility with the JSON era.
@@ -166,8 +167,8 @@ def save_match_file(teamA_name, teamB_name, A_bat, A_bowl, B_bat, B_bowl,
         cur = con.execute(
             """
             INSERT INTO matches
-            (team_a, team_b, timestamp_utc, winner, margin, a_score, b_score, stage)
-            VALUES (?,?,?,?,?,?,?,?)
+            (team_a, team_b, timestamp_utc, winner, margin, a_score, b_score, stage, venue, pitch)
+            VALUES (?,?,?,?,?,?,?,?,?,?)
             """,
             (
                 teamA_name,
@@ -178,6 +179,8 @@ def save_match_file(teamA_name, teamB_name, A_bat, A_bowl, B_bat, B_bowl,
                 result.get("A_score"),
                 result.get("B_score"),
                 stage,
+                venue,
+                pitch,
             ),
         )
         match_id = cur.lastrowid

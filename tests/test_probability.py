@@ -1,12 +1,13 @@
 import pytest
 
 import probability
-from config_manager import get_bowler_fatigue_settings, get_profile, list_profiles
+from config_manager import get_bowler_fatigue_settings, get_game_settings, get_pitch_settings, get_profile, list_profiles
 from match_simulator import generate_bowling_order
 from probability import (
     calculate_ball_probabilities,
     calculate_effective_bowling,
     determine_ball_outcome,
+    pitch_bowling_bonus,
 )
 from teams import BOWLING_ORDERS, get_teams
 
@@ -43,18 +44,22 @@ def test_every_profile_has_all_coefficients(profile):
     assert all(isinstance(p.get(k), (int, float)) for k in COEFF_KEYS), profile
 
 
+@pytest.mark.parametrize("pitch_type", sorted(get_game_settings()["pitches"]))
 @pytest.mark.parametrize("profile", list(list_profiles()))
-def test_probabilities_valid_for_real_players(profile):
-    """Every profile must give valid probabilities for every real batter/bowler
-    pairing. Fails if a rating change pushes e.g. wicket chance below zero."""
+def test_probabilities_valid_for_real_players(profile, pitch_type):
+    """Every profile on every pitch must give valid probabilities for every real
+    batter/bowler pairing. Fails if a rating or pitch change pushes e.g. the
+    wicket chance below zero."""
     lo_bat, hi_bat, lo_bowl, hi_bowl = _real_extremes()
     coeffs = _coeffs(profile)
+    pitch = get_pitch_settings(pitch_type)
+    bonuses = [pitch_bowling_bonus(s, pitch) for s in ("pace", "spin")]
     for bat in (lo_bat, hi_bat):
-        for bowl in (lo_bowl, hi_bowl):
+        for bowl in (lo_bowl + min(bonuses), hi_bowl + max(bonuses)):
             for over in (0, 19):
-                probs = calculate_ball_probabilities(bat, bowl, over, 20, coeffs)
-                assert all(0 <= p <= 1 for p in probs), (profile, bat, bowl, over, probs)
-                assert sum(probs) < 1, (profile, bat, bowl, over, probs)
+                probs = calculate_ball_probabilities(bat, bowl, over, 20, coeffs, pitch)
+                assert all(0 <= p <= 1 for p in probs), (profile, pitch_type, bat, bowl, over, probs)
+                assert sum(probs) < 1, (profile, pitch_type, bat, bowl, over, probs)
 
 
 def test_probabilities_move_in_the_right_direction(coeffs):

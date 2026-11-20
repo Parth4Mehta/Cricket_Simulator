@@ -33,7 +33,7 @@ def test_migration_adds_stage_column_to_old_matches_table():
     with connection.get_conn() as con:
         cols = [r[1] for r in con.execute("PRAGMA table_info(matches)")]
         stage = con.execute("SELECT stage FROM matches").fetchone()[0]
-    assert "stage" in cols
+    assert {"stage", "venue", "pitch"} <= set(cols)
     assert stage == "league"
 
 
@@ -76,6 +76,7 @@ def test_archive_copies_season_and_keeps_current(rows):
 
     assert season_id is not None
     assert rows("SELECT COUNT(*) FROM historical_matches")[0][0] == 1
+    assert rows("SELECT venue, pitch FROM historical_matches")[0]["pitch"] is not None
     assert rows("SELECT COUNT(*) FROM historical_match_batting")[0][0] > 0
     assert rows("SELECT COUNT(*) FROM matches")[0][0] == 1  # current untouched
     assert len(historical.list_seasons()) == 1

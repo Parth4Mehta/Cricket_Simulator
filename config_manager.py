@@ -90,6 +90,15 @@ def reset_advanced_profile():
     return config.get("game_settings", {})
 
 
+NEUTRAL_PITCH = {"boundary_mult": 1.0, "wicket_mult": 1.0, "pace_bonus": 0.0, "spin_bonus": 0.0}
+
+
+def get_pitch_settings(pitch_type):
+    """Effect numbers for a pitch type from game_settings.pitches (neutral if missing)."""
+    pitches = get_game_settings().get("pitches", {})
+    return {**NEUTRAL_PITCH, **pitches.get(pitch_type, {})}
+
+
 def get_bowler_fatigue_settings():
     """Get bowler fatigue settings from game_settings"""
     settings = get_game_settings()

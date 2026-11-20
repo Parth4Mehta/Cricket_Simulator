@@ -45,7 +45,9 @@ CREATE TABLE IF NOT EXISTS matches (
     margin         TEXT,
     a_score        INTEGER,
     b_score        INTEGER,
-    stage          TEXT NOT NULL DEFAULT 'league'
+    stage          TEXT NOT NULL DEFAULT 'league',
+    venue          TEXT,
+    pitch          TEXT
 );
 
 -- Per-match batting card (one row per batter per match).
@@ -120,6 +122,8 @@ CREATE TABLE IF NOT EXISTS historical_matches (
     a_score             INTEGER,
     b_score             INTEGER,
     stage               TEXT NOT NULL DEFAULT 'league',
+    venue               TEXT,
+    pitch               TEXT,
     FOREIGN KEY (season_id) REFERENCES seasons(season_id) ON DELETE CASCADE
 );
 

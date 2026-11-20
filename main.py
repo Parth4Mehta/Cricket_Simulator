@@ -9,6 +9,7 @@ from match_simulator import choose_profile, choose_profile_default, simulate_mat
 from league_simulator import simulate_league, select_teams
 from database import print_caps_and_table, clear_database, get_points_table_sorted
 from teams import get_teams
+from venues import get_home_venue, get_pitch
 
 
 def print_banner():
@@ -82,8 +83,16 @@ def menu_simulate_match():
         team2 = all_teams[team2_idx]
         
         ball_by_ball = input("Show ball-by-ball (y/n, default: n): ").strip().lower() == "y"
-        
-        simulate_match(team1, team2, ball_by_ball=ball_by_ball)
+
+        print("
+Venue:")
+        print(f"  1. {team1} home - {get_home_venue(team1)} ({get_pitch(get_home_venue(team1))})")
+        print(f"  2. {team2} home - {get_home_venue(team2)} ({get_pitch(get_home_venue(team2))})")
+        print("  3. Neutral (random ground)")
+        venue_choice = input("Select venue (1-3, default: 3): ").strip()
+        venue = {"1": get_home_venue(team1), "2": get_home_venue(team2)}.get(venue_choice)
+
+        simulate_match(team1, team2, ball_by_ball=ball_by_ball, venue=venue)
     except ValueError:
         print("Invalid input!")
     except KeyboardInterrupt:

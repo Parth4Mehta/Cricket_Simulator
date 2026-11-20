@@ -20,7 +20,14 @@ def calculate_effective_bowling(bowling_skill, up_value, fatigue_rate, overs_bow
     return bowling_skill + up_value - (fatigue_rate * overs_bowled)
 
 
-def calculate_ball_probabilities(striker_batting, effective_bowling, over_num, total_overs, coefficients):
+def pitch_bowling_bonus(style, pitch):
+    """Change to a bowler's effective bowling from the pitch (e.g. spin on a turning pitch)."""
+    if not pitch:
+        return 0.0
+    return pitch.get(f"{style}_bonus", 0.0)
+
+
+def calculate_ball_probabilities(striker_batting, effective_bowling, over_num, total_overs, coefficients, pitch=None):
     four_coeff, six_coeff, wicket_coeff, dot_ball_coeff, batsman_four_boost, batsman_six_boost, bowler_wicket_boost = coefficients
     p4 = four_coeff + striker_batting * batsman_four_boost - effective_bowling * BOWLING_FOUR_PENALTY
     p6 = six_coeff + striker_batting * batsman_six_boost - effective_bowling * BOWLING_SIX_PENALTY
@@ -32,6 +39,11 @@ def calculate_ball_probabilities(striker_batting, effective_bowling, over_num, t
         p6 += striker_batting * DEATH_SIX_BATTING_BOOST - effective_bowling * DEATH_SIX_BOWLING_PENALTY
         pw += effective_bowling * DEATH_WICKET_BOWLING_BOOST
         pdot -= DEATH_DOT_REDUCTION - effective_bowling * DEATH_DOT_BOWLING_OFFSET
+
+    if pitch:
+        p4 *= pitch.get("boundary_mult", 1.0)
+        p6 *= pitch.get("boundary_mult", 1.0)
+        pw *= pitch.get("wicket_mult", 1.0)
 
     total = p4 + p6 + pw + pdot + RUN_RESIDUAL
     return p4 / total, p6 / total, pw / total, pdot / total

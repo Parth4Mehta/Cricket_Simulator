@@ -7,6 +7,7 @@ followed by a 4-team playoff system.
 
 import random
 from match_simulator import simulate_match
+from venues import get_home_venue
 import database
 from config_manager import reset_advanced_profile
 from database import print_points_table
@@ -57,7 +58,9 @@ def simulate_double_round_robin_playoff(selected_teams, playoff_ball_by_ball=Fal
         if league_ball_by_ball:
             input(f"\nPress Enter to simulate Match {idx}/{len(fixtures)}: {A} vs {B}...")
         print(f"[Match {idx}/{len(fixtures)}] ", end="" if not league_ball_by_ball else "\n")
-        winner = simulate_match(A, B, league_ball_by_ball, ball_timer=0, innings_timer=0)
+        # A is the home side (each pair plays twice, once at each ground)
+        winner = simulate_match(A, B, league_ball_by_ball, ball_timer=0, innings_timer=0,
+                                venue=get_home_venue(A))
         if winner != "TIE":
             points_in_this_season[winner] = points_in_this_season.get(winner, 0) + 2
         else:

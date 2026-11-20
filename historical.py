@@ -68,21 +68,22 @@ def archive_current_season(champion=None):
         match_id_map = {}
         rows = con.execute(
             "SELECT match_id, team_a, team_b, timestamp_utc, winner, margin, "
-            "a_score, b_score, stage FROM matches"
+            "a_score, b_score, stage, venue, pitch FROM matches"
         ).fetchall()
         for r in rows:
             cur = con.execute(
                 """
                 INSERT INTO historical_matches
                 (season_id, team_a, team_b, timestamp_utc, winner, margin,
-                 a_score, b_score, stage)
-                VALUES (?,?,?,?,?,?,?,?,?)
+                 a_score, b_score, stage, venue, pitch)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?)
                 """,
                 (
                     season_id,
                     r["team_a"], r["team_b"], r["timestamp_utc"],
                     r["winner"], r["margin"],
                     r["a_score"], r["b_score"], r["stage"],
+                    r["venue"], r["pitch"],
                 ),
             )
             match_id_map[r["match_id"]] = cur.lastrowid

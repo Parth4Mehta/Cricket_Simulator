@@ -25,9 +25,16 @@ def _apply_migrations(con):
     SQLite's CREATE TABLE IF NOT EXISTS does not patch existing tables, so
     additive column changes go here. Each block is safe to re-run.
     """
-    cols = [r[1] for r in con.execute("PRAGMA table_info(matches)").fetchall()]
-    if cols and "stage" not in cols:
-        con.execute("ALTER TABLE matches ADD COLUMN stage TEXT NOT NULL DEFAULT 'league'")
+    def add_column(table, column, decl):
+        cols = [r[1] for r in con.execute(f"PRAGMA table_info({table})").fetchall()]
+        if cols and column not in cols:
+            con.execute(f"ALTER TABLE {table} ADD COLUMN {column} {decl}")
+
+    add_column("matches", "stage", "TEXT NOT NULL DEFAULT 'league'")
+    # venue + pitch (pitches feature)
+    for table in ("matches", "historical_matches"):
+        add_column(table, "venue", "TEXT")
+        add_column(table, "pitch", "TEXT")
 
 
 def ensure_db():
