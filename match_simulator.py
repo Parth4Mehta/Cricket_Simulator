@@ -1,6 +1,6 @@
 import random
 import time
-from teams import get_teams, get_bowling_order, get_bowler_ranking
+from teams import get_teams, get_bowling_order, get_bowler_ranking, get_player
 import database
 from config_manager import get_profile, list_profiles, get_default_profile, update_advanced_profile, reset_advanced_profile, get_bowler_fatigue_settings
 from probability import calculate_effective_bowling, calculate_ball_probabilities, determine_ball_outcome
@@ -586,6 +586,7 @@ def print_scorecard(team_name, batting_team, score, wickets, batting_stats, bowl
                          header_style="bold magenta", box=box.ROUNDED)
     batting_table.add_column("#", style="dim", width=3)
     batting_table.add_column("Player", style="cyan", width=25)
+    batting_table.add_column("Role", style="dim", width=4)
     batting_table.add_column("R", justify="right", style="yellow")
     batting_table.add_column("B", justify="right", style="white")
     batting_table.add_column("4s", justify="right", style="blue")
@@ -605,6 +606,7 @@ def print_scorecard(team_name, batting_team, score, wickets, batting_stats, bowl
         batting_table.add_row(
             str(i+1),
             player_name,
+            batting_team[i].role.upper(),
             f"[{runs_style}]{s['runs']}[/{runs_style}]",
             str(balls),
             str(s['4s']),
@@ -619,6 +621,7 @@ def print_scorecard(team_name, batting_team, score, wickets, batting_stats, bowl
     bowling_table = Table(title="⚾ BOWLING PERFORMANCE", show_header=True, 
                          header_style="bold magenta", box=box.ROUNDED)
     bowling_table.add_column("Bowler", style="cyan", width=25)
+    bowling_table.add_column("Type", style="dim", width=4)
     bowling_table.add_column("O", justify="right", style="white")
     bowling_table.add_column("R", justify="right", style="yellow")
     bowling_table.add_column("W", justify="right", style="red")
@@ -642,8 +645,10 @@ def print_scorecard(team_name, batting_team, score, wickets, batting_stats, bowl
         wickets_style = "bold red" if wk >= 3 else "red"
         econ_style = "bold green" if econ < 7.0 else "green" if econ < 9.0 else "yellow"
         
+        bowler_player = get_player(bname)
         bowling_table.add_row(
             bname,
+            bowler_player.style if bowler_player else "-",
             overs_str,
             str(runs),
             f"[{wickets_style}]{wk}[/{wickets_style}]",

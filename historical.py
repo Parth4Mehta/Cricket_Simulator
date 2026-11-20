@@ -698,6 +698,10 @@ def print_player_card(card):
 
     rich = _try_rich()
 
+    from teams import get_player
+    player = get_player(card["name"])
+    label = f" · {player.role.upper()} · {player.style}" if player else ""
+
     def _fmt(v, suffix=""):
         if v is None:
             return "-"
@@ -706,7 +710,7 @@ def print_player_card(card):
     if not rich:
         bat = card["batting"]
         bowl = card["bowling"]
-        print(f"\n=== {card['name']}  ({card.get('team') or '-'})  [source: {card['source']}] ===")
+        print(f"\n=== {card['name']}  ({card.get('team') or '-'}{label})  [source: {card['source']}] ===")
         print(" BATTING")
         print(f"   matches  : {_fmt(bat.get('matches'))}")
         print(f"   innings  : {_fmt(bat.get('innings', bat.get('matches')))}")
@@ -731,7 +735,7 @@ def print_player_card(card):
 
     Console, Table, Panel, box = rich
     console = Console()
-    title = f"🏏 {card['name']}  ({card.get('team') or '-'})  [{card['source']}]"
+    title = f"🏏 {card['name']}  ({card.get('team') or '-'}{label})  [{card['source']}]"
     console.print()
     console.print(Panel(title, border_style="cyan", box=box.DOUBLE_EDGE))
 

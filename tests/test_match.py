@@ -70,3 +70,13 @@ def test_simulate_match_persists_one_consistent_result(rows):
 def test_unknown_team_raises():
     with pytest.raises(ValueError):
         simulate_match("MI", "NOT_A_TEAM")
+
+
+def test_scorecard_and_player_card_show_labels(capsys):
+    import historical
+    simulate_match(BAT, BOWL)
+    out = capsys.readouterr().out
+    assert "BOWL" in out and "pace" in out  # role + style columns rendered
+
+    historical.print_player_card(historical.get_player_card_current("J Bumrah"))
+    assert "BOWL · pace" in capsys.readouterr().out
