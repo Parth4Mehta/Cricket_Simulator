@@ -85,8 +85,7 @@ def menu_simulate_match():
         
         ball_by_ball = input("Show ball-by-ball (y/n, default: n): ").strip().lower() == "y"
 
-        print("
-Venue:")
+        print("\nVenue:")
         print(f"  1. {team1} home - {get_home_venue(team1)} ({get_pitch(get_home_venue(team1))})")
         print(f"  2. {team2} home - {get_home_venue(team2)} ({get_pitch(get_home_venue(team2))})")
         print("  3. Neutral (random ground)")

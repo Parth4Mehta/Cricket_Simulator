@@ -42,6 +42,7 @@ setup(
     ],
     extras_require={
         "rich": ["rich>=10.0.0"],  # For beautiful console tables
+        "menus": ["questionary>=2.0"],  # Arrow-key menus for live choices
         "dev": [
             "pytest>=6.0",
             "black>=21.0",

@@ -26,6 +26,7 @@ classifiers = [
 
 [project.optional-dependencies]
 rich = ["rich>=10.0.0"]
+menus = ["questionary>=2.0"]
 dev = ["pytest>=6.0", "black>=21.0", "flake8>=3.9"]
 
 [project.urls]

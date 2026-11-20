@@ -45,6 +45,15 @@ def test_chosen_openers_bat_first():
     assert [w for _, w in fall] == list(range(1, wickets + 1))  # FOW shows wicket numbers
 
 
+def test_next_batter_by_name_and_listing_shows_ratings():
+    lineup = get_teams()[BAT]
+    out = []
+    cap = LiveCaptain(input_fn=scripted(["hardik"]), print_fn=out.append)
+    assert cap.choose_next_batter(BAT, lineup, list(range(2, 11)), "") == 5
+    listing = "\n".join(map(str, out))
+    assert "V Tilak" in listing and "batting  8.5" in listing and "<- default" in listing
+
+
 class LastBatterCaptain(LiveCaptain):
     """Always sends in the last batter on the list."""
     def __init__(self):
@@ -102,8 +111,27 @@ def test_prompt_parsing_rejects_bad_input_and_supports_auto():
     cap = LiveCaptain(input_fn=scripted(["auto"]), print_fn=lambda *a: None)
     assert cap.choose_bowler(BAT, 0, ranking, allowed, default, {p.name: 4 for p in lineup}, "") is default
     assert cap.auto
-    cap = LiveCaptain(input_fn=scripted(["A", "c"]), print_fn=lambda *a: None)  # A = Bumrah, unavailable -> re-ask
+    # 1 = Bumrah (unavailable), "zz" = no such name, "a" = ambiguous name -> re-ask; then pick by name
+    out = []
+    cap = LiveCaptain(input_fn=scripted(["1", "zz", "a", "chahar"]), print_fn=out.append)
     assert cap.choose_bowler(BAT, 0, ranking, allowed, default, {p.name: 4 for p in lineup}, "") is ranking["C"]
+    assert sum("Pick an available bowler" in str(o) for o in out) == 3
+    listing = "\n".join(map(str, out))
+    assert "J Bumrah" in listing and "bowling  9.5" in listing and "4 overs left" in listing
+    assert "S Rohit" not in listing  # rated under 5: hidden
+    cap = LiveCaptain(input_fn=scripted(["3"]), print_fn=lambda *a: None)  # by number
+    assert cap.choose_bowler(BAT, 0, ranking, allowed, default, {p.name: 4 for p in lineup}, "") is ranking["C"]
+
+
+def test_auto_toss_is_random_like_automatic_play():
+    """'auto' at the toss gives exactly the toss automatic play would give."""
+    for seed in range(10):
+        random.seed(seed)
+        expected = m.coin_toss(BAT, BOWL)
+        random.seed(seed)
+        cap = LiveCaptain(input_fn=scripted(["auto"]), print_fn=lambda *a: None)
+        assert m.coin_toss(BAT, BOWL, cap) == expected
+        assert not cap.auto  # the innings prompts still come up
 
 
 @pytest.mark.parametrize("answer, bats_first_is_winner", [("bowl", False), ("", True)])

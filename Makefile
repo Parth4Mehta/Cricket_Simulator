@@ -13,7 +13,7 @@ help:
 
 setup:
 	python -m venv venv
-	pip install -e ".[dev,rich]"
+	pip install -e ".[dev,rich,menus]"
 	@echo "✅ Development environment ready!"
 
 run:

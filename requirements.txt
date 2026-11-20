@@ -4,3 +4,6 @@
 
 # Optional - for beautiful console tables (fallback to plain text if not installed)
 rich>=10.0.0
+
+# Optional - arrow-key menus for live choices (falls back to typed prompts if not installed)
+questionary>=2.0

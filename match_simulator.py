@@ -228,7 +228,9 @@ def coin_toss(teamA_name, teamB_name, captain=None):
     toss_loser = teamB_name if toss_winner == teamA_name else teamA_name
     
     # 50/50 bat or bowl decision, unless the user is making live choices
-    decision = captain.choose_toss(toss_winner) if captain else random.choice(["BAT", "BOWL"])
+    decision = captain.choose_toss(toss_winner) if captain else None
+    if decision is None:  # no live choices, or the user typed "auto"
+        decision = random.choice(["BAT", "BOWL"])
     
     if decision == "BAT":
         batting_first = toss_winner
